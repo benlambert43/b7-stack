@@ -26,7 +26,7 @@ npm error Fetching packages of type "git" have been disabled
 You can bypass this with --allow-git=all.
 
 ```sh
-npx --allow-git=all github:benlambert43/b7-stack .
+npx --allow-git=all github:benlambert43/b7-stack "SunnyRadish"
 ```
 
 npx asks to install the package (the first run on a machine also installs the tooling that compiles the CLI), then the CLI asks for a one-sentence description. The command then creates `sunnyradish/`, swaps the name and description in, writes `.env` files with local defaults, runs `git init`, installs dependencies, and formats the result with the project's own Prettier. The result runs straight away:
