@@ -38,13 +38,15 @@ const starterFiles = new Set([
   "README.md",
 ]);
 
-const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description <text>]
+const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description <text>] [--db-port <port>]
 
   name           Display name of the new project. The folder and package names
                  are derived from it: "SunnyRadish" becomes sunnyradish.
   .              Scaffold into the current directory instead. It must be empty
                  apart from .git and the files GitHub adds to a new repository.
   --description  One sentence for the README, package.json, and the home page.
+  --db-port      Host port for the PostgreSQL container (default 5432). Give
+                 each project its own to run their databases side by side.
 
 Whatever is not given is asked for.`;
 
@@ -92,6 +94,7 @@ function parseArguments() {
       allowPositionals: true,
       options: {
         description: { type: "string", short: "d" },
+        "db-port": { type: "string", default: "5432" },
         help: { type: "boolean", short: "h" },
       },
     });
@@ -115,6 +118,11 @@ if (positionals.length > 1) {
 const nodeMajor = Number.parseInt(process.versions.node, 10);
 if (nodeMajor < 26) {
   fail(`Node.js 26 or newer is required; this is ${process.version}.`);
+}
+
+const dbPort = values["db-port"];
+if (!/^\d+$/.test(dbPort) || Number(dbPort) < 1 || Number(dbPort) > 65535) {
+  fail(`--db-port must be a port number from 1 to 65535, got "${dbPort}".`);
 }
 
 const inPlace = positionals[0] === ".";
@@ -192,7 +200,8 @@ function writeEnvFiles(projectDir: string) {
     const envFile = file.replace(/\.template$/, "");
     const env = fs
       .readFileSync(path.join(projectDir, file), "utf8")
-      .replace(/<[a-z_]+>/g, (match) => envValues.get(match) ?? match);
+      .replace(/<[a-z_]+>/g, (match) => envValues.get(match) ?? match)
+      .replace(/^POSTGRES_PORT=.*$/m, `POSTGRES_PORT=${dbPort}`);
     fs.writeFileSync(path.join(projectDir, envFile), env);
     const unfilled = env.match(/<[a-z_]+>/g);
     if (unfilled) {
@@ -233,7 +242,7 @@ run("npm", ["run", "format", "--silent", "--", "--log-level", "warn"]);
 console.log(`
 ${styleText("green", "✔")} ${styleText("bold", name)} is ready. Next:
 ${inPlace ? "" : `\n  cd ${slug}`}
-  npm run db:start      PostgreSQL in Docker, migrations applied
+  npm run db:start      PostgreSQL in Docker on port ${dbPort}, migrations applied
   npm run dev           web app on http://localhost:3000
   npm run dev:server    API on http://localhost:4000
 `);

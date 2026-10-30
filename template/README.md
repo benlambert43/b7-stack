@@ -13,7 +13,7 @@ A new B7 Stack project.
 
 Requires Node.js 26 (see `.nvmrc`), Docker, and [ShellCheck](https://www.shellcheck.net/) (`brew install shellcheck`).
 
-1. `.env`, `b7-stack-server/.env`, and `b7-stack-web/.env` were written with local defaults when the project was generated. On a fresh clone, copy each `.env.template` to `.env` beside it and fill in the values; the `POSTGRES_*` lines in the server file match the root file, so paste them across. Git ignores every `.env*` file except the templates.
+1. `.env`, `b7-stack-server/.env`, and `b7-stack-web/.env` were written with local defaults when the project was generated. On a fresh clone, copy each `.env.template` to `.env` beside it and fill in the values; the `POSTGRES_*` lines in the server file match the root file, so paste them across. `POSTGRES_PORT` is the port PostgreSQL listens on from your machine. Git ignores every `.env*` file except the templates.
 2. `npm install` installs every workspace and sets up the Husky pre-commit hook.
 3. `npm run db:start` starts PostgreSQL, waits until it accepts connections, and applies the migrations in `b7-stack-server/drizzle`.
 4. `npm run dev` starts the web app; `npm run dev:server` starts the API.

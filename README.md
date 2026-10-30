@@ -41,6 +41,7 @@ npm run dev:server   # API on http://localhost:4000
 - The folder and package names come from the name, lowercased and with each run of characters other than letters and digits replaced by a hyphen: `"SunnyRadish"` gives `sunnyradish`, `@sunnyradish/shared`, `sunnyradish-server`, and `sunnyradish-web`.
 - Pass `.` instead of a name to scaffold into the current directory, such as a freshly cloned empty repository. The folder name is offered as the project name, and `git init` is skipped when `.git` already exists.
 - Pass `--description "..."` to skip the prompt, for example in scripts.
+- Pass `--db-port 5433` (or any free port) to publish the PostgreSQL container on a port other than 5432
 - Node.js 26 or newer is required.
 
 The generated project ships a notes CRUD as a worked example of the whole path from PostgreSQL through Drizzle, Express, Zod, and Next.js server actions to React. Its README lists every script.
