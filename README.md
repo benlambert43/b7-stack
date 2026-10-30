@@ -16,7 +16,7 @@ SunnyRadish is the example project name used throughout this README. Put your ow
 npx github:benlambert43/b7-stack "SunnyRadish"
 ```
 
-You are asked for a one-sentence description. The command then creates `sunnyradish/`, swaps the name and description in, writes `.env` files with local defaults, runs `git init`, installs dependencies, and formats the result with the project's own Prettier. The result runs straight away:
+npx asks to install the package, then the CLI asks for a one-sentence description. The command then creates `sunnyradish/`, swaps the name and description in, writes `.env` files with local defaults, runs `git init`, installs dependencies, and formats the result with the project's own Prettier. The result runs straight away:
 
 ```sh
 cd sunnyradish
@@ -28,7 +28,7 @@ npm run dev:server   # API on http://localhost:4000
 - The folder and package names come from the name, lowercased and with each run of characters other than letters and digits replaced by a hyphen: `"SunnyRadish"` gives `sunnyradish`, `@sunnyradish/shared`, `sunnyradish-server`, and `sunnyradish-web`.
 - Pass `.` instead of a name to scaffold into the current directory, such as a freshly cloned empty repository. The folder name is offered as the project name, and `git init` is skipped when `.git` already exists.
 - Pass `--description "..."` to skip the prompt, for example in scripts.
-- Node.js 26 or newer is required. If this repository is private, use `npx git+ssh://git@github.com/benlambert43/b7-stack.git` instead.
+- Node.js 26 or newer is required.
 
 The generated project ships a notes CRUD as a worked example of the whole path from PostgreSQL through Drizzle, Express, Zod, and Next.js server actions to React. Its README lists every script.
 
