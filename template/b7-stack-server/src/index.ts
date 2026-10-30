@@ -26,4 +26,11 @@ app.listen(serverEnv.API_PORT, (error?: Error) => {
     return;
   }
   console.log(`b7-stack-server listening on port ${serverEnv.API_PORT}`);
+  void checkDatabase().then((database) => {
+    if (database === "ok") {
+      console.log(
+        `Connected to database "${serverEnv.POSTGRES_DB}" on ${serverEnv.POSTGRES_HOST}:${serverEnv.POSTGRES_PORT}`,
+      );
+    }
+  });
 });
