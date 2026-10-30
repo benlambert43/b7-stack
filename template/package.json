@@ -1,0 +1,69 @@
+{
+  "name": "b7-stack",
+  "version": "0.1.0",
+  "description": "A new B7 Stack project.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "workspaces": [
+    "b7-stack-shared",
+    "b7-stack-server",
+    "b7-stack-web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace b7-stack-web",
+    "dev:server": "npm run dev --workspace b7-stack-server",
+    "build": "npm run build --workspace b7-stack-web",
+    "db:start": "docker compose -f docker-compose.dev.yml up --detach --wait --wait-timeout 60",
+    "db:stop": "docker compose -f docker-compose.dev.yml down",
+    "db:generate": "npm run db:generate --workspace b7-stack-server",
+    "db:migrate": "npm run db:migrate --workspace b7-stack-server",
+    "db:studio": "npm run db:studio --workspace b7-stack-server",
+    "lint": "eslint --max-warnings 0",
+    "lint:fix": "eslint --fix",
+    "lint:shell": "shellcheck --shell=sh scripts/*.sh .husky/pre-commit",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "vitest run",
+    "test:shared": "vitest run --project b7-stack-shared",
+    "test:server": "vitest run --project b7-stack-server",
+    "test:web": "vitest run --project b7-stack-web",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "preflight": "sh scripts/preflight.sh",
+    "preflight:no-build": "sh scripts/preflight.sh --no-build",
+    "clean": "sh scripts/clean.sh",
+    "clean:force": "sh scripts/clean.sh --force",
+    "clean:dry-run": "sh scripts/clean.sh --dry-run",
+    "reset": "npm run clean && npm install && npm run db:start && npm run db:migrate",
+    "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^10.13.0",
+    "eslint-config-next": "16.4.3",
+    "globals": "^16.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-classnames": "^0.10.5",
+    "prettier-plugin-merge": "^0.10.2",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "eslint": "$eslint"
+  },
+  "allowScripts": {
+    "unrs-resolver": true,
+    "fsevents": true,
+    "esbuild": true
+  }
+}

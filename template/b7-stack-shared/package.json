@@ -1,0 +1,17 @@
+{
+  "name": "@b7-stack/shared",
+  "version": "0.1.0",
+  "description": "Types and Zod schemas shared by b7-stack-server and b7-stack-web.",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

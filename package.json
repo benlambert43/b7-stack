@@ -1,0 +1,17 @@
+{
+  "name": "create-b7-stack",
+  "version": "0.1.0",
+  "description": "Scaffolds a new project from the B7 Stack template: Next.js, Express, Drizzle, and PostgreSQL in one npm workspace.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "create-b7-stack": "bin/create.js"
+  },
+  "files": [
+    "bin",
+    "template"
+  ],
+  "engines": {
+    "node": ">=26"
+  }
+}

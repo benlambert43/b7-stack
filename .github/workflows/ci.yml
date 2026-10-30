@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scaffold:
+    name: Scaffold and check a project
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: template/package-lock.json
+      - name: Generate a project
+        run: node bin/create.js "Demo App" --description "A project generated in CI."
+      - name: Check that no placeholder survived
+        run: "! grep -rIiE 'b7[-_ ]?stack' demo-app --exclude-dir=node_modules --exclude-dir=.git"
+      - name: Preflight the project
+        run: npm run preflight
+        working-directory: demo-app

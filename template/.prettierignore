@@ -1,0 +1,8 @@
+package-lock.json
+package.json
+
+.next/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+b7-stack-server/drizzle/
