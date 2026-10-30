@@ -41,7 +41,7 @@ const starterFiles = new Set([
 const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description <text>]
 
   name           Display name of the new project. The folder and package names
-                 are derived from it: "Iron Elk" becomes iron-elk.
+                 are derived from it: "SunnyRadish" becomes sunnyradish.
   .              Scaffold into the current directory instead. It must be empty
                  apart from .git and the files GitHub adds to a new repository.
   --description  One sentence for the README, package.json, and the home page.

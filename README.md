@@ -10,20 +10,22 @@ A one-command starting point for new projects. Every project gets the same stack
 
 ## Usage
 
+SunnyRadish is the example project name used throughout this README. Put your own name in its place.
+
 ```sh
-npx github:benlambert43/b7-stack "Iron Elk"
+npx github:benlambert43/b7-stack "SunnyRadish"
 ```
 
-You are asked for a one-sentence description. The command then creates `iron-elk/`, swaps the name and description in, writes `.env` files with local defaults, runs `git init`, installs dependencies, and formats the result with the project's own Prettier. The result runs straight away:
+You are asked for a one-sentence description. The command then creates `sunnyradish/`, swaps the name and description in, writes `.env` files with local defaults, runs `git init`, installs dependencies, and formats the result with the project's own Prettier. The result runs straight away:
 
 ```sh
-cd iron-elk
+cd sunnyradish
 npm run db:start && npm run db:migrate
 npm run dev          # web app on http://localhost:3000
 npm run dev:server   # API on http://localhost:4000
 ```
 
-- The folder and package names come from the name: `"Iron Elk"` gives `iron-elk`, `@iron-elk/shared`, `iron-elk-server`, and `iron-elk-web`.
+- The folder and package names come from the name, lowercased and with each run of characters other than letters and digits replaced by a hyphen: `"SunnyRadish"` gives `sunnyradish`, `@sunnyradish/shared`, `sunnyradish-server`, and `sunnyradish-web`.
 - Pass `.` instead of a name to scaffold into the current directory, such as a freshly cloned empty repository. The folder name is offered as the project name, and `git init` is skipped when `.git` already exists.
 - Pass `--description "..."` to skip the prompt, for example in scripts.
 - Node.js 26 or newer is required. If this repository is private, use `npx git+ssh://git@github.com/benlambert43/b7-stack.git` instead.
@@ -34,11 +36,11 @@ The generated project ships a notes CRUD as a worked example of the whole path f
 
 `template/` is a complete project named "B7 Stack" and works in place: `cd template && npm install`, then follow its README. The CLI copies it file for file and replaces three strings everywhere, in file contents and in folder names:
 
-| In the template           | In a generated project               |
-| ------------------------- | ------------------------------------ |
-| `B7 Stack`                | the name as typed                    |
-| `b7-stack`                | the slug derived from it, `iron-elk` |
-| `A new B7 Stack project.` | the description                      |
+| In the template           | In a generated project                  |
+| ------------------------- | --------------------------------------- |
+| `B7 Stack`                | the name as typed                       |
+| `b7-stack`                | the slug derived from it, `sunnyradish` |
+| `A new B7 Stack project.` | the description                         |
 
 Keep those three strings exact when editing the template, and do not write `b7-stack` anywhere else in it. `template/_gitignore` and `template/_npmrc` become `.gitignore` and `.npmrc` on copy, because npm drops files with those names when it packages the template for `npx`. `.env` files, `node_modules`, and build output inside `template/` are never copied. The generated project is formatted afterwards because the slug's length moves table columns and line breaks around. Skip `npm run clean` inside `template/`: run from there, its `git clean` exclusions no longer cover `b7-stack-server/.env` and `b7-stack-web/.env`.
 
