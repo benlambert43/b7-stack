@@ -1,4 +1,6 @@
-export default {
+import { defineConfig } from "lint-staged/config";
+
+export default defineConfig({
   "*.{ts,tsx,mts,cts,js,mjs,cjs}": [
     () => "npm run typecheck",
     "eslint --max-warnings 0 --fix --no-warn-ignored",
@@ -8,4 +10,4 @@ export default {
   "!(*.ts|*.tsx|*.mts|*.cts|*.js|*.mjs|*.cjs)":
     "prettier --write --ignore-unknown",
   "*.sh": "shellcheck --shell=sh",
-};
+});

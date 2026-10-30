@@ -4,10 +4,11 @@
     "target": "esnext",
     "lib": ["esnext"],
     "types": ["node"],
-    "allowJs": true,
     "noEmit": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["*.js", "*.mjs", "*.cjs", "scripts"]
+  "include": ["*.ts", "scripts"]
 }

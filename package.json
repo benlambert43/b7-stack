@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "bin": {
-    "create-b7-stack": "bin/create.js"
+    "create-b7-stack": "bin/create.ts"
   },
   "files": [
     "bin",
@@ -13,5 +13,12 @@
   ],
   "engines": {
     "node": ">=26"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
   }
 }

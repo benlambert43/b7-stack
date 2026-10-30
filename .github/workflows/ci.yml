@@ -24,9 +24,13 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: template/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            template/package-lock.json
+      - name: Install and type-check the CLI
+        run: npm ci && npm run typecheck
       - name: Generate a project
-        run: node bin/create.js "Demo App" --description "A project generated in CI."
+        run: node bin/create.ts "Demo App" --description "A project generated in CI."
       - name: Check that no placeholder survived
         run: "! grep -rIiE 'b7[-_ ]?stack' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Preflight the project

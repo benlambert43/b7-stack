@@ -48,19 +48,19 @@ const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description
 
 Whatever is not given is asked for.`;
 
-function fail(message) {
+function fail(message: string): never {
   console.error(styleText("red", message, { stream: process.stderr }));
   process.exit(1);
 }
 
-function slugify(name) {
+function slugify(name: string) {
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
 
-async function ask(question, defaultValue = "") {
+async function ask(question: string, defaultValue = "") {
   if (!process.stdin.isTTY) {
     if (defaultValue) {
       return defaultValue;
@@ -86,19 +86,23 @@ async function ask(question, defaultValue = "") {
   }
 }
 
-let args;
-try {
-  args = parseArgs({
-    allowPositionals: true,
-    options: {
-      description: { type: "string", short: "d" },
-      help: { type: "boolean", short: "h" },
-    },
-  });
-} catch (error) {
-  fail(`${error.message}\n\n${usage}`);
+function parseArguments() {
+  try {
+    return parseArgs({
+      allowPositionals: true,
+      options: {
+        description: { type: "string", short: "d" },
+        help: { type: "boolean", short: "h" },
+      },
+    });
+  } catch (error) {
+    fail(
+      `${error instanceof Error ? error.message : String(error)}\n\n${usage}`,
+    );
+  }
 }
-const { values, positionals } = args;
+
+const { values, positionals } = parseArguments();
 
 if (values.help) {
   console.log(usage);
@@ -108,7 +112,7 @@ if (positionals.length > 1) {
   fail(`Expected one name, got ${positionals.length}.\n\n${usage}`);
 }
 
-const [nodeMajor] = process.versions.node.split(".").map(Number);
+const nodeMajor = Number.parseInt(process.versions.node, 10);
 if (nodeMajor < 26) {
   fail(`Node.js 26 or newer is required; this is ${process.version}.`);
 }
@@ -141,15 +145,16 @@ const replacements = new Map([
   [placeholders.name, name],
   [placeholders.slug, slug],
 ]);
-const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const placeholderPattern = new RegExp(
   [...replacements.keys()].map(escapeRegExp).join("|"),
   "g",
 );
-const fill = (text) =>
-  text.replace(placeholderPattern, (match) => replacements.get(match));
+const fill = (text: string) =>
+  text.replace(placeholderPattern, (match) => replacements.get(match) ?? match);
 
-function copyTemplate(sourceDir, destinationDir) {
+function copyTemplate(sourceDir: string, destinationDir: string) {
   fs.mkdirSync(destinationDir, { recursive: true });
   for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
     if (skippedFiles.has(entry.name)) {
@@ -173,14 +178,14 @@ function copyTemplate(sourceDir, destinationDir) {
   }
 }
 
-function writeEnvFiles(projectDir) {
+function writeEnvFiles(projectDir: string) {
   const envValues = new Map([
     ["<username>", slug],
     ["<password>", randomBytes(16).toString("hex")],
     ["<database_name>", slug],
   ]);
   const envTemplates = fs
-    .readdirSync(projectDir, { recursive: true })
+    .readdirSync(projectDir, { encoding: "utf8", recursive: true })
     .filter((file) => path.basename(file) === ".env.template");
   for (const file of envTemplates) {
     const envFile = file.replace(/\.template$/, "");
@@ -198,7 +203,7 @@ function writeEnvFiles(projectDir) {
   return envTemplates.length;
 }
 
-function run(command, commandArgs) {
+function run(command: string, commandArgs: string[]) {
   console.log(styleText("bold", `\n▶ ${command} ${commandArgs.join(" ")}`));
   try {
     execFileSync(command, commandArgs, {
