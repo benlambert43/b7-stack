@@ -4,8 +4,7 @@
     "target": "esnext",
     "lib": ["esnext"],
     "types": ["node"],
-    "rootDir": "bin",
-    "outDir": "dist",
+    "noEmit": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
@@ -15,5 +14,5 @@
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true
   },
-  "include": ["bin"]
+  "include": ["bin", "*.ts"]
 }

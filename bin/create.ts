@@ -125,7 +125,8 @@ const slug = slugify(name);
 if (!slug) {
   fail(`"${name}" has no letters or digits to name the packages after.`);
 }
-const description = values.description?.trim() || (await ask("Description"));
+const description =
+  (values.description ?? "").trim() || (await ask("Description"));
 const targetDir = inPlace ? process.cwd() : path.resolve(slug);
 
 if (fs.existsSync(targetDir)) {

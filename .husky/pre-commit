@@ -1,0 +1,4 @@
+lint-staged || {
+  printf '\nSkip the hook once with: git commit --no-verify\n' >&2
+  exit 1
+}

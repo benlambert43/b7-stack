@@ -27,8 +27,8 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             template/package-lock.json
-      - name: Install and type-check the CLI
-        run: npm ci && npm run typecheck
+      - name: Install and preflight the root
+        run: npm ci && npm run preflight
       - name: Generate a project the way npx does
         env:
           PACKAGE: github:${{ github.repository }}#${{ github.event.pull_request.head.sha || github.sha }}

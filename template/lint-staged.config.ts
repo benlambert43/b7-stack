@@ -9,5 +9,5 @@ export default defineConfig({
   ],
   "!(*.ts|*.tsx|*.mts|*.cts|*.js|*.mjs|*.cjs)":
     "prettier --write --ignore-unknown",
-  "*.sh": "shellcheck --shell=sh",
+  "*.sh": "shellcheck",
 });

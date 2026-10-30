@@ -4,6 +4,7 @@ import js from "@eslint/js";
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import betterTailwindcss from "eslint-plugin-better-tailwindcss";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -62,6 +63,18 @@ export default defineConfig([
             "Node.js runs this code without a build step and cannot strip accessor fields.",
         },
       ],
+    },
+  },
+  {
+    files: ["b7-stack-web/**/*.{ts,tsx}"],
+    extends: [betterTailwindcss.configs.recommended],
+    rules: {
+      "better-tailwindcss/enforce-consistent-class-order": "off",
+      "better-tailwindcss/enforce-consistent-line-wrapping": "off",
+      "better-tailwindcss/enforce-consistent-variant-order": "warn",
+    },
+    settings: {
+      "better-tailwindcss": { entryPoint: "b7-stack-web/app/globals.css" },
     },
   },
 ]);
