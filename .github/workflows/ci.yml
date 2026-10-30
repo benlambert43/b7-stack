@@ -29,8 +29,10 @@ jobs:
             template/package-lock.json
       - name: Install and type-check the CLI
         run: npm ci && npm run typecheck
-      - name: Generate a project
-        run: node bin/create.ts "Demo App" --description "A project generated in CI."
+      - name: Generate a project the way npx does
+        env:
+          PACKAGE: github:${{ github.repository }}#${{ github.event.pull_request.head.sha || github.sha }}
+        run: npx --yes "$PACKAGE" "Demo App" --description "A project generated in CI."
       - name: Check that no placeholder survived
         run: "! grep -rIiE 'b7[-_ ]?stack' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Preflight the project

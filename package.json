@@ -5,16 +5,17 @@
   "private": true,
   "type": "module",
   "bin": {
-    "create-b7-stack": "bin/create.ts"
+    "create-b7-stack": "dist/create.js"
   },
   "files": [
-    "bin",
+    "dist",
     "template"
   ],
   "engines": {
     "node": ">=26"
   },
   "scripts": {
+    "prepare": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
