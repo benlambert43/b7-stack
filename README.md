@@ -19,7 +19,8 @@ npx github:benlambert43/b7-stack "SunnyRadish"
 Starting with npm v12+, you may get this error when trying to run this command:
 
 ```
-npm error fetching packages of type "git" have been disabled
+npm error code EALLOWGIT
+npm error Fetching packages of type "git" have been disabled
 ```
 
 You can bypass this with --allow-git=all.
