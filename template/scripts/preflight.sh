@@ -23,6 +23,7 @@ run format:check
 run typecheck
 run lint
 run lint:shell
+run lint:editor
 run test
 
 if [ "$with_build" -eq 1 ]; then

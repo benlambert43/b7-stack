@@ -115,5 +115,5 @@ fi
 pass "$summary"
 restore_hint
 [ -n "$db_removals" ] &&
-  printf '\033[2mThe database comes back empty with \033[0m\033[1mnpm run db:start\033[0m\n'
+  printf '\033[2mStart the database again, migrations included, with \033[0m\033[1mnpm run db:start\033[0m\n'
 printf '\n'

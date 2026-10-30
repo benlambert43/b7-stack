@@ -5,8 +5,8 @@
   "editor.tabSize": 2,
   "files.associations": { "*.css": "tailwindcss" },
   "js/ts.preferences.importModuleSpecifier": "non-relative",
+  "js/ts.tsdk.path": "template/node_modules/typescript/lib",
   "tailwindCSS.lint.cssConflict": "ignore",
   "tailwindCSS.lint.recommendedVariantOrder": "ignore",
-  "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
-  "typescript.tsdk": "template/node_modules/typescript/lib"
+  "tailwindCSS.lint.suggestCanonicalClasses": "ignore"
 }

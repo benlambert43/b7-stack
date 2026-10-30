@@ -233,7 +233,7 @@ run("npm", ["run", "format", "--silent", "--", "--log-level", "warn"]);
 console.log(`
 ${styleText("green", "✔")} ${styleText("bold", name)} is ready. Next:
 ${inPlace ? "" : `\n  cd ${slug}`}
-  npm run db:start && npm run db:migrate
+  npm run db:start      PostgreSQL in Docker, migrations applied
   npm run dev           web app on http://localhost:3000
   npm run dev:server    API on http://localhost:4000
 `);

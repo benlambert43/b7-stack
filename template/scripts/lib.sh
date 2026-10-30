@@ -3,6 +3,7 @@ fix_hint() {
     format:check) printf '  Fix with: \033[1mnpm run format\033[0m\n' ;;
     lint)         printf '  Fix with: \033[1mnpm run lint:fix\033[0m\n' ;;
     lint:shell)   printf '  Each finding links to a wiki page with the fix. Missing ShellCheck? \033[1mbrew install shellcheck\033[0m\n' ;;
+    lint:editor)  printf '  Rename or drop the setting VS Code marks as deprecated in .vscode/settings.json\n' ;;
   esac
 }
 

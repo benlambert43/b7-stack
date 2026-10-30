@@ -8,4 +8,5 @@ export default defineConfig({
   ],
   "!(*.ts|*.tsx|*.mts|*.cts|*.js|*.mjs|*.cjs)":
     "prettier --write --ignore-unknown",
+  ".vscode/settings.json": () => "npm run lint:editor",
 });

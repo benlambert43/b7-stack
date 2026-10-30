@@ -16,7 +16,7 @@
     "dev": "npm run dev --workspace b7-stack-web",
     "dev:server": "npm run dev --workspace b7-stack-server",
     "build": "npm run build --workspace b7-stack-web",
-    "db:start": "docker compose -f docker-compose.dev.yml up --detach --wait --wait-timeout 60",
+    "db:start": "docker compose -f docker-compose.dev.yml up --detach --wait --wait-timeout 60 && npm run db:migrate",
     "db:stop": "docker compose -f docker-compose.dev.yml down",
     "db:generate": "npm run db:generate --workspace b7-stack-server",
     "db:migrate": "npm run db:migrate --workspace b7-stack-server",
@@ -24,7 +24,8 @@
     "lint": "eslint --max-warnings 0",
     "lint:fix": "eslint --fix",
     "lint:shell": "shellcheck scripts/*.sh .husky/pre-commit",
-    "typecheck": "npm run typecheck --workspaces",
+    "lint:editor": "node scripts/check-editor-settings.ts",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspaces",
     "test": "vitest run",
     "test:shared": "vitest run --project b7-stack-shared",
     "test:server": "vitest run --project b7-stack-server",
@@ -38,7 +39,7 @@
     "clean": "sh scripts/clean.sh",
     "clean:force": "sh scripts/clean.sh --force",
     "clean:dry-run": "sh scripts/clean.sh --dry-run",
-    "reset": "npm run clean && npm install && npm run db:start && npm run db:migrate",
+    "reset": "npm run clean && npm install && npm run db:start",
     "prepare": "husky || true"
   },
   "devDependencies": {
