@@ -3,8 +3,8 @@ import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import readline from "node:readline/promises";
-import { parseArgs, styleText } from "node:util";
+import readline from "node:readline";
+import { styleText } from "node:util";
 
 const templateDir = path.join(import.meta.dirname, "..", "template");
 
@@ -58,20 +58,6 @@ const starterFiles = new Set([
   "README.md",
 ]);
 
-const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description <text>] [--db-port <port>] [--desktop | --no-desktop]
-
-  name           Display name of the new project. The folder and package names
-                 are derived from it: "SunnyRadish" becomes sunnyradish.
-  .              Scaffold into the current directory instead. It must be empty
-                 apart from .git and the files GitHub adds to a new repository.
-  --description  One sentence for the README, package.json, and the home page.
-  --db-port      Host port for the PostgreSQL container (default 5432). Give
-                 each project its own to run their databases side by side.
-  --desktop      Add an Electron desktop app that shares its components with
-                 the web app. --no-desktop leaves it out without asking.
-
-Whatever is not given is asked for.`;
-
 function fail(message: string): never {
   console.error(styleText("red", message, { stream: process.stderr }));
   process.exit(1);
@@ -84,75 +70,10 @@ function slugify(name: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-async function ask(question: string, defaultValue = "") {
-  if (!process.stdin.isTTY) {
-    if (defaultValue) {
-      return defaultValue;
-    }
-    fail(
-      `${question} is required when there is no terminal to ask in.\n\n${usage}`,
-    );
-  }
-  const prompt = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  try {
-    let answer = "";
-    while (!answer) {
-      const hint = defaultValue ? ` (${defaultValue})` : "";
-      answer =
-        (await prompt.question(`${question}${hint}: `)).trim() || defaultValue;
-    }
-    return answer;
-  } finally {
-    prompt.close();
-  }
-}
-
-async function confirm(question: string) {
-  if (!process.stdin.isTTY) {
-    return false;
-  }
-  const prompt = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  try {
-    const answer = await prompt.question(`${question} (y/N): `);
-    return /^y(es)?$/i.test(answer.trim());
-  } finally {
-    prompt.close();
-  }
-}
-
-function parseArguments() {
-  try {
-    return parseArgs({
-      allowPositionals: true,
-      allowNegative: true,
-      options: {
-        description: { type: "string", short: "d" },
-        "db-port": { type: "string", default: "5432" },
-        desktop: { type: "boolean" },
-        help: { type: "boolean", short: "h" },
-      },
-    });
-  } catch (error) {
-    fail(
-      `${error instanceof Error ? error.message : String(error)}\n\n${usage}`,
-    );
-  }
-}
-
-const { values, positionals } = parseArguments();
-
-if (values.help) {
-  console.log(usage);
-  process.exit(0);
-}
-if (positionals.length > 1) {
-  fail(`Expected one name, got ${String(positionals.length)}.\n\n${usage}`);
+if (process.argv.length > 2) {
+  fail(
+    "This command takes no arguments. Run it without any and answer its questions.",
+  );
 }
 
 const nodeMajor = Number.parseInt(process.versions.node, 10);
@@ -160,15 +81,43 @@ if (nodeMajor < 26) {
   fail(`Node.js 26 or newer is required; this is ${process.version}.`);
 }
 
-const dbPort = values["db-port"];
-if (!/^\d+$/.test(dbPort) || Number(dbPort) < 1 || Number(dbPort) > 65535) {
-  fail(`--db-port must be a port number from 1 to 65535, got "${dbPort}".`);
+const terminal = process.stdin.isTTY ? process.stdout.isTTY : false;
+const prompt = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal,
+});
+const answers = prompt[Symbol.asyncIterator]();
+
+async function ask(question: string, defaultValue = "") {
+  const hint = defaultValue ? ` (${defaultValue})` : "";
+  const text = `${question}${hint}: `;
+  for (;;) {
+    if (terminal) {
+      prompt.setPrompt(text);
+      prompt.prompt();
+    } else {
+      process.stdout.write(text);
+    }
+    const line = await answers.next();
+    if (line.done) {
+      fail(`\nThe input ended before "${question}" was answered.`);
+    }
+    const answer = line.value.trim() || defaultValue;
+    if (!process.stdin.isTTY) {
+      console.log(answer);
+    }
+    if (answer) {
+      return answer;
+    }
+  }
 }
 
-const inPlace = positionals[0] === ".";
+const nameAnswer = await ask("Project name, or . to use the current directory");
+const inPlace = nameAnswer === ".";
 const name = inPlace
   ? await ask("Project name", path.basename(process.cwd()))
-  : (positionals[0] ?? (await ask("Project name")));
+  : nameAnswer;
 if (unsupportedCharacters.test(name)) {
   fail(
     `"${name}" contains a character that cannot be used in the project name: " \\ or a control character`,
@@ -178,15 +127,22 @@ const slug = slugify(name);
 if (!slug) {
   fail(`"${name}" has no letters or digits to name the packages after.`);
 }
-const description =
-  (values.description ?? "").trim() || (await ask("Description"));
+const description = await ask("Description");
 if (unsupportedCharacters.test(description)) {
   fail(
     `The description contains a character that cannot be used in it: " \\ or a control character`,
   );
 }
-const desktop =
-  values.desktop ?? (await confirm("Add an Electron desktop app?"));
+const dbPort = await ask("Database port", "5432");
+if (!/^\d+$/.test(dbPort) || Number(dbPort) < 1 || Number(dbPort) > 65535) {
+  fail(`The database port must be a number from 1 to 65535, got "${dbPort}".`);
+}
+const desktopAnswer = await ask("Add an Electron desktop app?", "yes");
+if (!/^(?:y|yes|n|no)$/i.test(desktopAnswer)) {
+  fail(`Answer yes or no to the desktop app, got "${desktopAnswer}".`);
+}
+const desktop = /^y/i.test(desktopAnswer);
+prompt.close();
 if (desktop && unsupportedDesktopNameCharacters.test(name)) {
   fail(
     `"${name}" contains a character that cannot be used in the name of a project with a desktop app: * / : < > ? |`,

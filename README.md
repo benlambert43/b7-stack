@@ -1,6 +1,6 @@
 # b7-stack
 
-A one-command starting point for new projects. Every project gets the same stack, so the only inputs are a name, a description, and whether to add a desktop app.
+A one-command starting point for new projects. Every project gets the same stack, so it only asks for a name, a description, a database port, and whether to add a desktop app.
 
 | Part               | What you get                                                                                                              |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
@@ -19,80 +19,81 @@ A generated project ships a notes CRUD as a worked example of the whole path, fr
 Requires Node.js 26 or newer, Git, and Docker for the database. SunnyRadish is the example name used throughout; put your own in its place.
 
 ```sh
-npx --allow-git=all github:benlambert43/b7-stack "SunnyRadish"
+npx --allow-git=all github:benlambert43/b7-stack
 ```
 
 npm 12 and newer refuse packages fetched from Git with `npm error code EALLOWGIT` unless `--allow-git=all` is given. Older versions of npm do not need the flag.
 
-npx asks to install the package, and the CLI then asks for whatever was not given: a one-sentence description and whether to add a desktop app. When it finishes, the project runs straight away:
+npx asks to install the package, and the CLI then asks its questions one by one. When it finishes, the project runs straight away:
 
 ```sh
 cd sunnyradish
 npm run db:start      # PostgreSQL in Docker, migrations applied
 npm run dev           # web app on http://localhost:3000
 npm run dev:server    # API on http://localhost:4000
-npm run dev:desktop   # desktop app, in a project created with --desktop
+npm run dev:desktop   # desktop app, if you added one
 ```
 
-## Options
+## Questions
 
-```text
-npx github:benlambert43/b7-stack [name | .] [--description <text>] [--db-port <port>] [--desktop | --no-desktop]
-```
+The command takes no arguments. Everything is asked for, in this order:
 
-| Argument                     | What it does                                                                                                                                         |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`                       | Display name of the project. The folder and package names are derived from it. Asked for when left out                                               |
-| `.`                          | Scaffolds into the current directory instead of a new folder, and offers the folder's name as the project name                                       |
-| `--description <text>`, `-d` | One sentence for the README, `package.json`, and the home page. Asked for when left out                                                              |
-| `--db-port <port>`           | Host port for the PostgreSQL container, from 1 to 65535. Defaults to 5432. Give each project its own to run their databases side by side             |
-| `--desktop`                  | Adds `sunnyradish-desktop`, an Electron app that shows the same notes page as the web app. Asked about when neither this nor `--no-desktop` is given |
-| `--no-desktop`               | Leaves the desktop app out without asking                                                                                                            |
-| `--help`, `-h`               | Prints the usage and exits                                                                                                                           |
+| Question                                          | Default | What the answer sets                                                                                                              |
+| ------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `Project name, or . to use the current directory` | none    | The display name of the project. The folder and package names are derived from it                                                 |
+| `Description`                                     | none    | One sentence for the README, `package.json`, and the home page                                                                    |
+| `Database port`                                   | `5432`  | The host port for the PostgreSQL container, from 1 to 65535. Give each project its own to run their databases side by side        |
+| `Add an Electron desktop app?`                    | `yes`   | `yes` or `y` adds `sunnyradish-desktop`, an Electron app that shows the same notes page as the web app; `no` or `n` leaves it out |
+
+A default is shown in parentheses after the question and is used when the answer is left blank. A question without a default is asked again until it is answered.
 
 ### Examples
 
-Answer the prompts for the description and the desktop app:
+Take the defaults by pressing Enter at the last two questions, which adds the desktop app:
 
-```sh
-npx --allow-git=all github:benlambert43/b7-stack "SunnyRadish"
+```text
+Project name, or . to use the current directory: SunnyRadish
+Description: Notes for gardeners.
+Database port (5432):
+Add an Electron desktop app? (yes):
 ```
 
-Give everything up front, so that nothing is asked:
+Leave the desktop app out, and publish PostgreSQL on a port other than 5432:
 
-```sh
-npx --allow-git=all github:benlambert43/b7-stack "SunnyRadish" --description "Notes for gardeners." --no-desktop
+```text
+Project name, or . to use the current directory: SunnyRadish
+Description: Notes for gardeners.
+Database port (5432): 5433
+Add an Electron desktop app? (yes): no
 ```
 
-Add the desktop app, and publish PostgreSQL on a port other than 5432:
+Scaffold into the current directory, such as a freshly cloned empty repository. Answering `.` brings up the name again, with the folder's name as its default:
 
-```sh
-npx --allow-git=all github:benlambert43/b7-stack "SunnyRadish" -d "Notes for gardeners." --desktop --db-port 5433
+```text
+Project name, or . to use the current directory: .
+Project name (sunnyradish):
+Description: Notes for gardeners.
+Database port (5432):
+Add an Electron desktop app? (yes):
 ```
 
-Scaffold into the current directory, such as a freshly cloned empty repository:
+In a script or in CI, give the answers on standard input, one line each and in the same order. An empty line takes the default, and `--yes` stops npx from asking to install the package. This one keeps port 5432 and leaves the desktop app out:
 
 ```sh
-npx --allow-git=all github:benlambert43/b7-stack . --description "Notes for gardeners." --no-desktop
-```
-
-Print the usage:
-
-```sh
-npx --allow-git=all github:benlambert43/b7-stack --help
+printf '%s\n' "SunnyRadish" "Notes for gardeners." "" "no" | npx --yes --allow-git=all github:benlambert43/b7-stack
 ```
 
 ### Rules
 
-- **Names.** The name is lowercased and each run of characters other than letters and digits becomes a hyphen. `"SunnyRadish"` gives `sunnyradish`, `@sunnyradish/shared`, `@sunnyradish/ui`, `sunnyradish-server`, and `sunnyradish-web`; `"Demo App"` gives `demo-app`.
-- **Characters.** The name and the description may not contain `"`, `\`, or control characters, which would break the files they are written into. With `--desktop` the name may not contain `* / : < > ? |` either, which Windows does not allow in file names.
+- **Names.** The name is lowercased and each run of characters other than letters and digits becomes a hyphen. `SunnyRadish` gives `sunnyradish`, `@sunnyradish/shared`, `@sunnyradish/ui`, `sunnyradish-server`, and `sunnyradish-web`; `Demo App` gives `demo-app`.
+- **Characters.** The name and the description may not contain `"`, `\`, or control characters, which would break the files they are written into. With the desktop app the name may not contain `* / : < > ? |` either, which Windows does not allow in file names.
 - **Target folder.** It must be new, or hold nothing but what GitHub adds to a new repository: `.git`, `.gitignore`, `.gitattributes`, `LICENSE`, and `README.md`. The template's `.gitignore`, `.gitattributes`, and `README.md` replace the ones already there.
-- **Without a terminal**, as in a script or CI, nothing can be asked. Pass the name and `--description`; the desktop app is left out unless `--desktop` is given.
+- **Invalid answers.** An answer that breaks one of these rules, a port out of range, or anything but `yes`, `y`, `no`, or `n` for the desktop app stops the command before any file is written. So does input that ends before every question has an answer.
 
 ### What the command does
 
 1. Copies the template into `sunnyradish/` and swaps the name and the description in.
-2. Writes a `.env` beside each `.env.template` with local defaults: the slug as the database user and name, a random password, and the port from `--db-port`.
+2. Writes a `.env` beside each `.env.template` with local defaults: the slug as the database user and name, a random password, and the database port that was chosen.
 3. Runs `git init` with `main` as the branch, unless `.git` already exists.
 4. Runs `npm install`, then formats the project with its own Prettier.
 
@@ -104,7 +105,7 @@ If a step fails, the files stay in the folder and the error says where they are.
 | --------------------------- | ---------------------------------------------------------------------------------- |
 | `bin/create.ts`             | The CLI. `npm install` compiles it into `dist/create.js`, which is what npx runs   |
 | `template/`                 | A complete, working project named "B7 Stack", which the CLI copies                 |
-| `template/b7-stack-desktop` | The desktop app, always present in the template and copied only with `--desktop`   |
+| `template/b7-stack-desktop` | The desktop app, always present in the template and left out when declined         |
 | `.github/workflows/ci.yml`  | Scaffolds a project with and without the desktop app and runs each one's preflight |
 
 ### Setup
@@ -131,12 +132,16 @@ These cover the root only; ESLint and Prettier ignore `template/` here. Run the 
 
 ### Trying the CLI
 
-The CLI runs from source and takes the same arguments as it does through npx. It creates the project in the directory it is run from, so run it from somewhere outside the checkout, with the path to yours in place of `/path/to`:
+The CLI runs from source and asks the same questions as it does through npx. It creates the project in the directory it is run from, so run it from somewhere outside the checkout, with the path to yours in place of `/path/to`:
 
 ```sh
-node /path/to/b7-stack/bin/create.ts "Demo App" --description "Trying things out." --no-desktop
-node /path/to/b7-stack/bin/create.ts "Demo App" --description "Trying things out." --desktop --db-port 5433
-node /path/to/b7-stack/bin/create.ts --help
+node /path/to/b7-stack/bin/create.ts
+```
+
+Pipe the answers in to skip the typing. This one sets the database port to 5433 and adds the desktop app:
+
+```sh
+printf '%s\n' "Demo App" "Trying things out." "5433" "yes" | node /path/to/b7-stack/bin/create.ts
 ```
 
 To see what npx would install, list the package's files:
@@ -163,13 +168,13 @@ The CLI copies `template/` file for file and replaces three strings everywhere, 
 
 ### The desktop app in the template
 
-Without `--desktop` the CLI leaves `template/b7-stack-desktop` out and removes what refers to it elsewhere:
+When the desktop app is declined, the CLI leaves `template/b7-stack-desktop` out and removes what refers to it elsewhere:
 
 - everything between a line containing `desktop:start` and the next line containing `desktop:end`;
 - the workspace and the scripts for it in the root `package.json`;
 - each line that names `b7-stack-desktop` and is a whole entry on its own: a quoted string in a list with one entry per line, a path in an ignore file, or a Markdown list item or table row.
 
-With `--desktop` it removes only the marker lines. So whatever the desktop app needs outside its own folder must be one of those lines, as the ignore files, the Vitest project list, and the README's tables are, or sit between markers, as the ESLint block and the CI job do.
+When the desktop app is added, it removes only the marker lines. So whatever the desktop app needs outside its own folder must be one of those lines, as the ignore files, the Vitest project list, and the README's tables are, or sit between markers, as the ESLint block and the CI job do.
 
 Any other line that names the folder, and any unbalanced marker, makes the CLI stop with an error naming the file. CI also fails if the project without the desktop app contains the word "desktop" at all.
 
@@ -183,7 +188,7 @@ Any other line that names the folder, and any unbalanced marker, makes the CLI s
 
 ### CI and Dependabot
 
-CI runs the root preflight, installs the commit under test with npx exactly as a user would, scaffolds a project with and without `--desktop`, checks that no placeholder or marker survived, and runs each project's `npm run preflight`. A broken template or CLI fails here first.
+CI runs the root preflight, installs the commit under test with npx exactly as a user would, scaffolds a project with and without the desktop app by piping the answers in, checks that no placeholder or marker survived, and runs each project's `npm run preflight`. A broken template or CLI fails here first.
 
 Dependabot updates the npm packages at the root and in the template, the Postgres image in the template, and the actions in this repository's workflow. Three things are left to do by hand:
 

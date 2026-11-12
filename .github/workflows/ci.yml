@@ -23,9 +23,9 @@ jobs:
       matrix:
         include:
           - variant: web only
-            flags: ""
+            desktop: "no"
           - variant: with the desktop app
-            flags: --desktop
+            desktop: "yes"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -40,13 +40,13 @@ jobs:
       - name: Generate a project the way npx does
         env:
           PACKAGE: github:${{ github.repository }}#${{ github.event.pull_request.head.sha || github.sha }}
-        run: npx --yes "$PACKAGE" "Demo App" --description "A project generated in CI." ${{ matrix.flags }}
+        run: printf '%s\n' "Demo App" "A project generated in CI." "" "${{ matrix.desktop }}" | npx --yes "$PACKAGE"
       - name: Check that no placeholder survived
         run: "! grep -rIiE 'b7[-_ ]?stack' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Check that no template marker survived
         run: "! grep -rIE 'desktop:(start|end)' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Check that nothing of the desktop app was copied
-        if: ${{ matrix.flags == '' }}
+        if: ${{ matrix.desktop == 'no' }}
         run: "! grep -rIi 'desktop' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Preflight the project
         run: npm run preflight
