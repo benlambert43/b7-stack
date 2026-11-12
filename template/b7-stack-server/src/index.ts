@@ -29,7 +29,9 @@ app.listen(serverEnv.API_PORT, (error?: Error) => {
     process.exitCode = 1;
     return;
   }
-  console.log(`b7-stack-server listening on port ${String(serverEnv.API_PORT)}`);
+  console.log(
+    `b7-stack-server listening on port ${String(serverEnv.API_PORT)}`,
+  );
   void checkDatabase().then((database) => {
     if (database === "ok") {
       console.log(
