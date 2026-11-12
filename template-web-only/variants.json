@@ -1,0 +1,39 @@
+{
+  "b7-stack-web/app/_actions/notes.ts": {
+    "b7-stack-web/app/_actions/notes.ts": "4d4cf9e4a585913bebeb95ae5299066039cff8bd1c2c99f646e0f424148c4b14",
+    "b7-stack-shared/src/noteActions.ts": "66ccded8f677e3a25f384e3154e8a9a00083aaef29049dce147780a08332a72c"
+  },
+  "b7-stack-web/app/_components/HelloWorld.test.tsx": {
+    "b7-stack-web/app/_components/HelloWorld.test.tsx": "a2ab68f0b6f01ef44317f55c6c8d3da79ca4604425d59de46b1d2ac35e02d8ec"
+  },
+  "b7-stack-web/app/_components/NoteForm.tsx": {
+    "b7-stack-ui/src/NoteForm.tsx": "60facf060f93a8b4d689e222da05cdaf327718fcc32ecec0ee7b7991b6a2f210"
+  },
+  "b7-stack-web/app/_components/NoteItem.tsx": {
+    "b7-stack-ui/src/NoteItem.tsx": "501febc006f98b7d0c98fd0a9926039b7e80ae06ec21d36ebf2ddc736fd0a21e"
+  },
+  "b7-stack-web/app/_components/Notes.tsx": {
+    "b7-stack-web/app/_components/Notes.tsx": "763c359a9cd41ab0e9d70e2d081c67352028bad82fff8910ca24163600fd9b49",
+    "b7-stack-ui/src/NoteList.tsx": "9289f2a0c4d41068b0903ee62a9e6ed2379c012b22523223fa028ba28f4c6db3",
+    "b7-stack-ui/src/NotesSection.tsx": "5ff5c4c822906796c32d6129bf0f934f6ca1b893171e4cb6af0e57b77fb714b1",
+    "b7-stack-ui/src/AppShell.tsx": "8958856b1be33738303606d8ffd02ea938622c0a17fc6b71c839cdf458e70021"
+  },
+  "b7-stack-web/app/_components/StatusChecks.tsx": {
+    "b7-stack-web/app/_components/StatusChecks.tsx": "fc9f3d69798e47e4df7bd58ce4f2fd8480214f27085b842ea0d5bd4bcac8fa59",
+    "b7-stack-ui/src/StatusSection.tsx": "5d8c88c735eaa416fc78a34597ae901f8fbf236def7aa949ec2f7a940fb0e2f6",
+    "b7-stack-ui/src/AppShell.tsx": "8958856b1be33738303606d8ffd02ea938622c0a17fc6b71c839cdf458e70021"
+  },
+  "b7-stack-web/app/_lib/api.ts": {
+    "b7-stack-web/app/_lib/api.ts": "fe6541d50e5a828744199252ca050fa9bd332c153b08824f120246e1b8bc7066"
+  },
+  "b7-stack-web/app/_lib/apiHealth.ts": {
+    "b7-stack-shared/src/apiClient.ts": "14980474667d4ba48369742670983542e78df0d1d5426fd67c635953d76377dd"
+  },
+  "b7-stack-web/app/_lib/notesApi.ts": {
+    "b7-stack-shared/src/apiClient.ts": "14980474667d4ba48369742670983542e78df0d1d5426fd67c635953d76377dd"
+  },
+  "b7-stack-web/app/page.tsx": {
+    "b7-stack-web/app/page.tsx": "65b2f2f9715d34f941bf9b5c016d3627fe1581ea7df0ac72c0c6e7bfadfa2c74",
+    "b7-stack-ui/src/AppShell.tsx": "8958856b1be33738303606d8ffd02ea938622c0a17fc6b71c839cdf458e70021"
+  }
+}

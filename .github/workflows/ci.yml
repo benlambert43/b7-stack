@@ -44,7 +44,7 @@ jobs:
       - name: Check that no placeholder survived
         run: "! grep -rIiE 'b7[-_ ]?stack' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Check that no template marker survived
-        run: "! grep -rIE 'desktop:(start|end)' demo-app --exclude-dir=node_modules --exclude-dir=.git"
+        run: "! grep -rIE '(desktop|web-only):(start|end)' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Check that nothing of the desktop app was copied
         if: ${{ matrix.desktop == 'no' }}
         run: "! grep -rIi 'desktop' demo-app --exclude-dir=node_modules --exclude-dir=.git"

@@ -1,4 +1,9 @@
+/* desktop:start */
 @source "./";
+/* desktop:end */
+/* web-only:start
+@import "tailwindcss";
+web-only:end */
 
 :root {
   --background: #ffffff;

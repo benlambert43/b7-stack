@@ -11,6 +11,7 @@
     "dist",
     "template",
     "template-web-only",
+    "!template-web-only/variants.json",
     "!template/**/node_modules",
     "!template/**/.next",
     "!template/**/.vite",
@@ -31,8 +32,9 @@
     "lint:shell": "shellcheck .husky/pre-commit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preflight": "npm run format:check && npm run typecheck && npm run lint && npm run lint:shell && npm run lint:editor",
-    "lint:editor": "node template/scripts/check-editor-settings.ts"
+    "preflight": "npm run format:check && npm run typecheck && npm run lint && npm run lint:shell && npm run lint:editor && npm run lint:variants",
+    "lint:editor": "node template/scripts/check-editor-settings.ts",
+    "lint:variants": "node scripts/check-variants.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

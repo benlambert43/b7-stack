@@ -26,16 +26,36 @@ const desktopOnlyPaths = new Set([
   path.join(`${placeholders.slug}-shared`, "src", "apiClient.ts"),
   path.join(`${placeholders.slug}-shared`, "src", "noteActions.ts"),
 ]);
+const webOnlyMoves = new Map([
+  [
+    path.join(`${placeholders.slug}-ui`, "src", "StatusRow.tsx"),
+    path.join(
+      `${placeholders.slug}-web`,
+      "app",
+      "_components",
+      "StatusRow.tsx",
+    ),
+  ],
+  [
+    path.join(`${placeholders.slug}-ui`, "src", "theme.css"),
+    path.join(`${placeholders.slug}-web`, "app", "globals.css"),
+  ],
+]);
+const webOnlyMoveTargets = new Set(webOnlyMoves.values());
+const variantManifest = "variants.json";
 const desktopWorkspacePattern = `(?:${desktopWorkspaces.join("|")})`;
 const lineEnd = String.raw`(?:\r?\n|(?![\s\S]))`;
-const desktopBlock = new RegExp(
-  String.raw`^.*desktop:start.*\r?\n[\s\S]*?^.*desktop:end.*` + lineEnd,
-  "gm",
-);
-const desktopMarker = new RegExp(
-  String.raw`^.*desktop:(?:start|end).*` + lineEnd,
-  "gm",
-);
+const blockOf = (name: string) =>
+  new RegExp(
+    String.raw`^.*${name}:start.*\r?\n[\s\S]*?^.*${name}:end.*` + lineEnd,
+    "gm",
+  );
+const markerOf = (name: string) =>
+  new RegExp(String.raw`^.*${name}:(?:start|end).*` + lineEnd, "gm");
+const desktopBlock = blockOf("desktop");
+const desktopMarker = markerOf("desktop");
+const webOnlyBlock = blockOf("web-only");
+const webOnlyMarker = markerOf("web-only");
 const removableDesktopLine = new RegExp(
   String.raw`^(?:[ \t]*["'][^"'\n]*${desktopWorkspacePattern}[^"'\n]*["'],?[ \t]*|[^\s]*${desktopWorkspacePattern}[^\s]*|[ \t]*(?:[-*|]|\d+\.)[ \t].*${desktopWorkspacePattern}.*)` +
     lineEnd,
@@ -229,6 +249,27 @@ function applyWebOnly(relative: string, text: string) {
   return `${JSON.stringify(merged, null, 2)}\n`;
 }
 
+function checkMarkers(relative: string, text: string) {
+  for (const name of ["desktop", "web-only"]) {
+    const markers = [
+      ...text.matchAll(new RegExp(`${name}:(start|end)`, "g")),
+    ].map(([, kind]) => kind);
+    if (markers.some((kind, index) => kind !== (index % 2 ? "end" : "start"))) {
+      fail(`${relative} has unbalanced ${name}:start and ${name}:end markers.`);
+    }
+  }
+}
+
+function selectVariant(relative: string, text: string) {
+  if (path.basename(relative) === "package-lock.json") {
+    return text;
+  }
+  checkMarkers(relative, text);
+  return desktop
+    ? text.replace(webOnlyBlock, "").replace(desktopMarker, "")
+    : removeDesktop(relative, text);
+}
+
 function removeDesktop(relative: string, text: string) {
   if (relative === "package.json") {
     const manifest = JSON.parse(text) as {
@@ -246,17 +287,9 @@ function removeDesktop(relative: string, text: string) {
     );
     return `${JSON.stringify(manifest, null, 2)}\n`;
   }
-  if (path.basename(relative) === "package-lock.json") {
-    return text;
-  }
-  const markers = [...text.matchAll(/desktop:(start|end)/g)].map(
-    ([, kind]) => kind,
-  );
-  if (markers.some((kind, index) => kind !== (index % 2 ? "end" : "start"))) {
-    fail(`${relative} has unbalanced desktop:start and desktop:end markers.`);
-  }
   const stripped = text
     .replace(desktopBlock, "")
+    .replace(webOnlyMarker, "")
     .replace(removableDesktopLine, "")
     .replace(removableDesktopEntry, "");
   const leftover = stripped
@@ -279,9 +312,12 @@ function copyTemplate(
   for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
     const source = path.join(sourceDir, entry.name);
     const relative = path.relative(rootDir, source);
+    const fromTemplate = rootDir === templateDir;
     if (
       skippedFiles.has(entry.name) ||
-      (!desktop && desktopOnlyPaths.has(relative))
+      (!desktop && desktopOnlyPaths.has(relative)) ||
+      (!desktop && fromTemplate && webOnlyMoveTargets.has(relative)) ||
+      (!fromTemplate && relative === variantManifest)
     ) {
       continue;
     }
@@ -293,7 +329,6 @@ function copyTemplate(
       copyTemplate(source, destination, rootDir);
       continue;
     }
-    const fromTemplate = rootDir === templateDir;
     if (!fromTemplate && fs.existsSync(path.join(templateDir, relative))) {
       continue;
     }
@@ -305,12 +340,10 @@ function copyTemplate(
       continue;
     }
     const text = content.toString("utf8");
-    const selected = desktop
-      ? text.replace(desktopMarker, "")
-      : removeDesktop(
-          relative,
-          fromTemplate ? applyWebOnly(relative, text) : text,
-        );
+    const selected = selectVariant(
+      relative,
+      !desktop && fromTemplate ? applyWebOnly(relative, text) : text,
+    );
     fs.writeFileSync(destination, fill(selected), {
       mode: fs.statSync(source).mode,
     });
@@ -360,6 +393,13 @@ console.log(styleText("bold", `\n▶ Creating ${name} in ${targetDir}`));
 copyTemplate(templateDir, targetDir);
 if (!desktop) {
   copyTemplate(webOnlyDir, targetDir);
+  for (const [from, to] of webOnlyMoves) {
+    const text = fs.readFileSync(path.join(templateDir, from), "utf8");
+    fs.writeFileSync(
+      path.join(targetDir, fill(to)),
+      fill(selectVariant(to, text)),
+    );
+  }
 }
 const envCount = writeEnvFiles(targetDir);
 console.log(

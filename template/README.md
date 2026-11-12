@@ -2,6 +2,8 @@
 
 A new B7 Stack project.
 
+<!-- desktop:start -->
+
 | Workspace          | What it is                                                             |
 | ------------------ | ---------------------------------------------------------------------- |
 | `b7-stack-web`     | Next.js web app                                                        |
@@ -9,6 +11,17 @@ A new B7 Stack project.
 | `b7-stack-shared`  | Zod schemas, types, and the API client, imported as `@b7-stack/shared` |
 | `b7-stack-ui`      | React components and the Tailwind theme, imported as `@b7-stack/ui`    |
 | `b7-stack-desktop` | Electron desktop app, built from the same components as the web app    |
+
+<!-- desktop:end -->
+<!-- web-only:start
+
+| Workspace         | What it is                                              |
+| ----------------- | ------------------------------------------------------- |
+| `b7-stack-web`    | Next.js web app                                         |
+| `b7-stack-server` | Express API on Node.js, with Drizzle ORM and PostgreSQL |
+| `b7-stack-shared` | Zod schemas and types, imported as `@b7-stack/shared`   |
+
+web-only:end -->
 
 ## Getting started
 
@@ -53,7 +66,7 @@ Run everything from the repository root.
 | `npm run build:desktop` | Packages the desktop app for this machine into `b7-stack-desktop/out`                     |
 | `npm run make:desktop`  | Packages the desktop app and zips it into `b7-stack-desktop/out/make`, ready to hand out  |
 
-Nothing is compiled during development. Node.js runs the server's TypeScript directly, and the two shared packages are imported straight from their sources. Between the API and the web app, only the web app has a build step.
+Nothing is compiled during development. Node.js runs the server's TypeScript directly, and shared code is imported straight from its sources. Between the API and the web app, only the web app has a build step.
 
 ```sh
 npm run dev --workspace b7-stack-web -- --port 3001   # dev server on another port
@@ -95,7 +108,7 @@ npm run db:studio --workspace b7-stack-server -- --port 5000                    
 ```sh
 npm run preflight:no-build                         # every check, without the build
 npm run lint -- b7-stack-web                       # one folder
-npm run lint:fix -- b7-stack-ui/src/NoteForm.tsx   # one file
+npm run lint:fix -- b7-stack-web/app/page.tsx      # one file
 npx prettier --write README.md                     # formats one file
 npm run typecheck --workspace b7-stack-server      # one workspace
 ```
@@ -104,17 +117,17 @@ The pre-commit hook runs lint-staged on the staged files: every workspace is typ
 
 ### Tests
 
-| Command                 | What it does                                                                        |
-| ----------------------- | ----------------------------------------------------------------------------------- |
-| `npm test`              | Runs Vitest once across every workspace                                             |
-| `npm run test:watch`    | Reruns tests as files change                                                        |
-| `npm run test:coverage` | Reports coverage in the terminal and as HTML in `coverage/`                         |
-| `npm run test:shared`   | Runs one workspace; `test:ui`, `test:server`, and `test:web` do the same for theirs |
+| Command                 | What it does                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm test`              | Runs Vitest once across every workspace                                                         |
+| `npm run test:watch`    | Reruns tests as files change                                                                    |
+| `npm run test:coverage` | Reports coverage in the terminal and as HTML in `coverage/`                                     |
+| `npm run test:shared`   | Runs one workspace; the others have a script of their own, such as `test:server` and `test:web` |
 
 ```sh
-npm test -- b7-stack-ui/src/AppShell.test.tsx   # one file
+npm test -- b7-stack-shared/src/notes.test.ts   # one file
 npm test -- -t "Hello World"                    # tests whose name matches
-npm run test:watch -- --project b7-stack-ui     # watches one workspace
+npm run test:watch -- --project b7-stack-web    # watches one workspace
 ```
 
 ### Cleaning up
@@ -152,6 +165,8 @@ curl -X POST http://localhost:4000/api/v1/notes -H 'content-type: application/js
 
 The notes page is a worked example of the whole path, from the database to the components.
 
+<!-- desktop:start -->
+
 | Layer                                      | Where                                                                       |
 | ------------------------------------------ | --------------------------------------------------------------------------- |
 | Table and migrations                       | `b7-stack-server/src/schema.ts` and `b7-stack-server/drizzle`               |
@@ -174,9 +189,25 @@ The notes page is a worked example of the whole path, from the database to the c
 - **`"use client"` where needed.** Components with state or event handlers start with it, which lets the App Router render them from server components. The others have no directive, so they can render on the server as well.
 - **One theme.** `src/theme.css` is the one place for colors and fonts, and it tells Tailwind to scan the package for class names. Each app's `globals.css` imports it after `tailwindcss` and provides the fonts behind `--font-geist-sans` and `--font-geist-mono` in its own way.
 - **No build step.** The apps compile the package from source, as they do `@b7-stack/shared`, so an edit hot-reloads in every app that is running.
+- **Linted like the web app.** The web app gets its React and accessibility rules from `eslint-config-next`. React code outside it is held to the React, hooks, and accessibility rule sets of the same plugins, and may not use Node.js globals.
 - **Tests beside the components.** They run in jsdom with Testing Library; `npm run test:ui` runs them alone.
 
 A component belongs in `b7-stack-ui` when more than one app shows it, or could. Create it in `src`, export it from `src/index.ts`, and import it from `@b7-stack/ui`. Pages and the components that load data stay in the app they belong to.
+
+<!-- desktop:end -->
+<!-- web-only:start
+
+| Layer                | Where                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| Table and migrations | `b7-stack-server/src/schema.ts` and `b7-stack-server/drizzle`                                   |
+| Routes               | `b7-stack-server/src/notes.ts`, mounted in `src/index.ts`                                       |
+| Server environment   | `b7-stack-server/src/serverEnv.ts`, parsed with Zod when the API starts                         |
+| Schemas and types    | `b7-stack-shared/src/notes.ts` and `src/health.ts`                                              |
+| API calls            | `b7-stack-web/app/_lib/notesApi.ts` and `app/_lib/apiHealth.ts`, which only the server runs     |
+| Server actions       | `b7-stack-web/app/_actions/notes.ts`, which check the input, call the API, and refresh the page |
+| Page and components  | `b7-stack-web/app/page.tsx` and `app/_components`                                               |
+
+web-only:end -->
 
 ## Search engines and link previews
 
@@ -202,7 +233,6 @@ SITE_URL=https://example.com npm run build
 - **Two TypeScript versions, on purpose.** The workspaces type-check with TypeScript 7, the native compiler, which `next build` also uses. The root keeps TypeScript 6 because typescript-eslint's type-aware rules still need the JavaScript compiler API. VS Code uses that copy too (`js/ts.tsdk.path` in `.vscode/settings.json`), because the TypeScript 7 package ships no language server. Dependabot leaves TypeScript's major and minor versions alone for the same reason; bump them by hand.
 - **One config for the repository.** ESLint, Prettier, and lint-staged are configured at the root and cover every workspace, so run them from the root. Vitest's root config lists the workspace projects, each of which keeps its own `vitest.config.ts`. Every config file is TypeScript: Node.js 26 loads them directly, and ESLint reads `eslint.config.ts` through `jiti`.
 - **The editor agrees with preflight.** A passing `npm run preflight` should leave nothing underlined in VS Code. ESLint fails on deprecated APIs and lints Tailwind classes with `eslint-plugin-better-tailwindcss`, which makes the same checks as the Tailwind CSS IntelliSense extension, so `.vscode/settings.json` turns those three IntelliSense lints off. Prettier wraps long class lists, so the plugin's line-wrapping rule is the one rule switched off.
-- **React rules everywhere.** The web app gets its React and accessibility rules from `eslint-config-next`. React code outside it is held to the React, hooks, and accessibility rule sets of the same plugins, and may not use Node.js globals.
 - **ShellCheck reads `.shellcheckrc`**, so a script checked on its own in the editor follows `scripts/lib.sh` just as `lint:shell` does.
 - **`overrides` in `package.json`.** One entry points every `eslint` peer dependency at the root ESLint 10, because some plugins bundled with `eslint-config-next` still declare ESLint 9. The other lets `@esbuild-kit/core-utils`, a deprecated package that `drizzle-kit` lists but never loads, share the esbuild already installed instead of adding an old release with a known advisory.
 - **`allowScripts` in `package.json`** is npm's install-script policy and names the packages whose install scripts may run. When `npm install` reports an unreviewed package, look at what its script does and approve it. `prune` drops the entries that an update has made unnecessary.
@@ -213,9 +243,12 @@ SITE_URL=https://example.com npm run build
   ```
 
 - **`.npmrc` sets `engine-strict`**, so `npm install` stops on a Node.js older than 26.
-- **Debugging.** `.vscode/launch.json` starts the API or an app under the VS Code debugger from Run and Debug. Breakpoints in the TypeScript sources bind in the Node.js processes, such as the API and the Next.js server; code that runs in a browser window is debugged with the window's developer tools.
 
 <!-- desktop:start -->
+
+## Debugging
+
+`.vscode/launch.json` starts the API or an app under the VS Code debugger from Run and Debug. Breakpoints in the TypeScript sources bind in the Node.js processes, such as the API and the Next.js server; code that runs in a browser window is debugged with the window's developer tools.
 
 ## Desktop app
 

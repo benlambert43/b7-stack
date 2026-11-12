@@ -120,14 +120,15 @@ The repository's `.vscode` settings mirror the template's and point VS Code at t
 
 ### Commands
 
-| Command                | What it does                                                                                    |
-| ---------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run preflight`    | Every check below, in order                                                                     |
-| `npm run format:check` | Checks formatting with Prettier; `npm run format` rewrites the files                            |
-| `npm run typecheck`    | Type-checks the CLI and the root config files                                                   |
-| `npm run lint`         | Runs ESLint with the typed rules and the deprecated-API check; `npm run lint:fix` applies fixes |
-| `npm run lint:shell`   | Runs ShellCheck on the pre-commit hook                                                          |
-| `npm run lint:editor`  | Fails on `.vscode/settings.json` keys that the installed VS Code marks as deprecated            |
+| Command                 | What it does                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `npm run preflight`     | Every check below, in order                                                                                  |
+| `npm run format:check`  | Checks formatting with Prettier; `npm run format` rewrites the files                                         |
+| `npm run typecheck`     | Type-checks the CLI and the root config files                                                                |
+| `npm run lint`          | Runs ESLint with the typed rules and the deprecated-API check; `npm run lint:fix` applies fixes              |
+| `npm run lint:shell`    | Runs ShellCheck on the pre-commit hook                                                                       |
+| `npm run lint:editor`   | Fails on `.vscode/settings.json` keys that the installed VS Code marks as deprecated                         |
+| `npm run lint:variants` | Fails when a template file has changed and the web-only variant that mirrors it has not been brought in line |
 
 These cover the root only; ESLint and Prettier ignore `template/` and `template-web-only/` here. Run the template's own checks from `template/`. On commit, Husky runs lint-staged, and staged files inside `template/` go through the template's lint-staged config.
 
@@ -171,25 +172,44 @@ The CLI copies `template/` file for file and replaces three strings everywhere, 
 
 The template is the project with the desktop app. In it the web and desktop apps share their components through `b7-stack-ui`, and the API client and the form logic through `b7-stack-shared`. A project without the desktop app has one app, so it keeps all of that inside `b7-stack-web`, as it would if the desktop app did not exist.
 
-When the desktop app is declined, the CLI leaves out `template/b7-stack-desktop`, `template/b7-stack-ui`, `.vscode/launch.json`, and `apiClient.ts` and `noteActions.ts` in `b7-stack-shared/src`. The `desktopOnlyPaths` list in `bin/create.ts` names them. It then changes the rest in two ways.
+When the desktop app is declined, the CLI leaves out `template/b7-stack-desktop`, `template/b7-stack-ui`, `.vscode/launch.json`, and `apiClient.ts` and `noteActions.ts` in `b7-stack-shared/src`. The `desktopOnlyPaths` list in `bin/create.ts` names them. What a file contains then depends on four things, listed from the one to prefer to the one to avoid.
 
-It takes each file in `template-web-only/` in place of the template's file at the same path:
+**Entries that remove themselves.** The CLI removes each reference to `b7-stack-desktop` or `b7-stack-ui` that is a whole entry on its own:
 
-- A file that is not JSON replaces the template's file, or is added where the template has none.
-- A JSON file is merged into the template's file instead, so that the versions in a `package.json` stay in one place. A key set to `null` is removed, an object is merged key by key, and any other value replaces the one in the template.
-
-And it removes what refers to the two workspaces in the files that remain:
-
-- everything between a line containing `desktop:start` and the next line containing `desktop:end`;
 - the workspaces and the scripts for them in the root `package.json`;
-- each line that names `b7-stack-desktop` or `b7-stack-ui` and is a whole entry on its own: a quoted string in a list with one entry per line, a path in an ignore file, or a Markdown list item or table row;
-- a quoted string that names one of them later in a list written on one line, together with the comma before it.
+- a line that is a quoted string in a list with one entry per line, a path in an ignore file, or a Markdown list item or table row;
+- a quoted string later in a list written on one line, together with the comma before it.
 
-When the desktop app is added, the CLI ignores `template-web-only/` and removes only the marker lines. So whatever the desktop app needs outside those two folders must be one of those entries, as the ignore files, the Vitest project list, and the cache key in the CI workflow are, or sit between markers, as the ESLint blocks and the CI job do. Where the project without the desktop app needs different content rather than less of it, give the file a variant in `template-web-only/`.
+**Markers.** Everything between a line containing `desktop:start` and the next line containing `desktop:end` is removed. Everything between `web-only:start` and `web-only:end` is kept instead, and removed when the desktop app is added. Write a web-only block inside a comment, so that it does nothing in the template:
 
-Any other line that names one of the workspaces or `@b7-stack/ui`, and any unbalanced marker, makes the CLI stop with an error naming the file. CI also fails if the project without the desktop app contains the word "desktop" at all.
+```md
+<!-- desktop:start -->
 
-A change to a template file that has a variant in `template-web-only/` belongs in the variant too. `README.md` is the largest of them. Prettier and ESLint do not run on `template-web-only/` in this repository, so scaffold a project without the desktop app and run its `npm run preflight` to check a change there, as CI does.
+Shown with the desktop app.
+
+<!-- desktop:end -->
+<!-- web-only:start
+
+Shown without it.
+
+web-only:end -->
+```
+
+The marker lines themselves never reach a project. `template/README.md` pairs the two kinds of block wherever the projects differ, and `theme.css` in `b7-stack-ui` does the same in a CSS comment.
+
+**Moved files.** `webOnlyMoves` in `bin/create.ts` lists files of `b7-stack-ui` that the project without the desktop app gets inside its web app: `StatusRow.tsx` goes to `app/_components`, and `theme.css` becomes `app/globals.css`.
+
+**Variants.** A file in `template-web-only/` takes the place of the template's file at the same path, or is added where the template has none. These are the files that are wired differently, such as the components that import the server actions instead of taking them as props. A JSON file there is merged into the template's file instead, so that the versions in a `package.json` stay in one place: a key set to `null` is removed, an object is merged key by key, and any other value replaces the one in the template.
+
+A variant is a second copy, so `template-web-only/variants.json` lists the template files that each one mirrors, with a hash of each. `npm run lint:variants` fails when one of those files has changed, and names the variant to look at. Make the same change there where it applies, then record the new hashes:
+
+```sh
+npm run lint:variants -- --update
+```
+
+A new variant needs an entry in `variants.json` with the template files it mirrors; give each an empty string and run the same command. JSON files are not listed. Prettier and ESLint do not run on `template-web-only/` in this repository, so scaffold a project without the desktop app and run its `npm run preflight` to check a change there, as CI does.
+
+Any other line that names one of the two workspaces or `@b7-stack/ui`, and any unbalanced marker, makes the CLI stop with an error naming the file. CI also fails if the project without the desktop app contains the word "desktop" at all.
 
 `package-lock.json` is copied whole, and the `npm install` that follows prunes it. Electron's binary is not part of that install: the `electron` package downloads it the first time the desktop app is started or packaged.
 
@@ -201,7 +221,7 @@ A change to a template file that has a variant in `template-web-only/` belongs i
 
 ### CI and Dependabot
 
-CI runs the root preflight, installs the commit under test with npx exactly as a user would, scaffolds a project with and without the desktop app by piping the answers in, checks that no placeholder or marker survived, and runs each project's `npm run preflight`. A broken template or CLI fails here first.
+CI runs the root preflight, installs the commit under test with npx exactly as a user would, scaffolds a project with and without the desktop app by piping the answers in, checks that no placeholder or marker survived, and runs each project's `npm run preflight`. The root preflight includes `lint:variants`. A broken template or CLI fails here first.
 
 Dependabot updates the npm packages at the root and in the template, the Postgres image in the template, and the actions in this repository's workflow. Three things are left to do by hand:
 
