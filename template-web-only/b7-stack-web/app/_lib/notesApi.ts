@@ -12,7 +12,7 @@ async function request(path: string, init?: RequestInit): Promise<Response> {
   });
   if (!response.ok) {
     throw new Error(
-      `${init?.method ?? "GET"} ${path} failed with ${response.status}`,
+      `${init?.method ?? "GET"} ${path} failed with ${String(response.status)}`,
     );
   }
   return response;

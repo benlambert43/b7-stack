@@ -1,7 +1,7 @@
 {
   "name": "@b7-stack/shared",
   "version": "0.1.0",
-  "description": "Types and Zod schemas shared by b7-stack-server and b7-stack-web.",
+  "description": "Zod schemas, types, and the API client shared by the API and the apps.",
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",

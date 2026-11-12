@@ -128,5 +128,5 @@ if (findings.length > 0) {
   process.exit(1);
 }
 console.log(
-  `No deprecated VS Code settings in ${settingsFile} (${deprecated.size} deprecated settings known).`,
+  `No deprecated VS Code settings in ${settingsFile} (${String(deprecated.size)} deprecated settings known).`,
 );

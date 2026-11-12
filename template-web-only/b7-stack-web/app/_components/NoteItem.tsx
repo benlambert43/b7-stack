@@ -7,7 +7,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import {
   deleteNote,
@@ -20,6 +20,15 @@ const iconButtonClassName =
 
 export function NoteItem({ note }: { note: Note }) {
   const [editing, setEditing] = useState(false);
+  const editField = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const field = editField.current;
+    if (editing && field) {
+      field.focus();
+      field.setSelectionRange(field.value.length, field.value.length);
+    }
+  }, [editing]);
 
   const [editState, editAction, editPending] = useActionState(
     async (previousState: NoteFormState, formData: FormData) => {
@@ -47,11 +56,11 @@ export function NoteItem({ note }: { note: Note }) {
             Edit note
           </label>
           <textarea
+            ref={editField}
             id={`note-${note.id}`}
             name="body"
             rows={2}
             required
-            autoFocus
             maxLength={NOTE_BODY_MAX_LENGTH}
             defaultValue={editState.error ? editState.body : note.body}
             className="flex-1 resize-y rounded-lg border border-zinc-300
@@ -93,7 +102,7 @@ export function NoteItem({ note }: { note: Note }) {
   return (
     <li className={`py-3 ${deletePending ? "opacity-50" : ""}`}>
       <div className="flex items-start gap-2">
-        <p className="flex-1 py-1.5 wrap-break-word whitespace-pre-wrap">
+        <p className="min-w-0 flex-1 py-1.5 wrap-break-word whitespace-pre-wrap">
           {note.body}
         </p>
         <button

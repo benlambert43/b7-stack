@@ -80,6 +80,10 @@ if [ -n "$untracked" ]; then
   if [ "$force" -eq 0 ]; then
     printf '\nGit has no copy of these — cleaning loses them for good.\n'
     printf 'Commit or stash them first, or repeat with: \033[1mnpm run clean:force\033[0m\n\n'
+    if [ "$dry_run" -eq 1 ]; then
+      printf '\033[2mDry run — nothing deleted.\033[0m\n\n'
+      exit 0
+    fi
     exit 1
   fi
 

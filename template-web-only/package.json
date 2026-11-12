@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@types/eslint-plugin-jsx-a11y": null,
+    "eslint-plugin-jsx-a11y": null,
+    "eslint-plugin-react": null,
+    "eslint-plugin-react-hooks": null
+  }
+}

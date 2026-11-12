@@ -6,3 +6,5 @@ coverage/
 *.tsbuildinfo
 next-env.d.ts
 b7-stack-server/drizzle/
+b7-stack-desktop/.vite/
+b7-stack-desktop/out/

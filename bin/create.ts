@@ -3,16 +3,70 @@ import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import readline from "node:readline/promises";
-import { parseArgs, styleText } from "node:util";
+import readline from "node:readline";
+import { styleText } from "node:util";
 
 const templateDir = path.join(import.meta.dirname, "..", "template");
+const webOnlyDir = path.join(import.meta.dirname, "..", "template-web-only");
 
 const placeholders = {
   description: "A new B7 Stack project.",
   name: "B7 Stack",
   slug: "b7-stack",
 };
+
+const desktopWorkspaces = [
+  `${placeholders.slug}-desktop`,
+  `${placeholders.slug}-ui`,
+];
+const desktopNames = [...desktopWorkspaces, `@${placeholders.slug}/ui`];
+const desktopOnlyPaths = new Set([
+  ...desktopWorkspaces,
+  path.join(".vscode", "launch.json"),
+  path.join(`${placeholders.slug}-shared`, "src", "apiClient.ts"),
+  path.join(`${placeholders.slug}-shared`, "src", "noteActions.ts"),
+]);
+const webOnlyMoves = new Map([
+  [
+    path.join(`${placeholders.slug}-ui`, "src", "StatusRow.tsx"),
+    path.join(
+      `${placeholders.slug}-web`,
+      "app",
+      "_components",
+      "StatusRow.tsx",
+    ),
+  ],
+  [
+    path.join(`${placeholders.slug}-ui`, "src", "theme.css"),
+    path.join(`${placeholders.slug}-web`, "app", "globals.css"),
+  ],
+]);
+const webOnlyMoveTargets = new Set(webOnlyMoves.values());
+const variantManifest = "variants.json";
+const desktopWorkspacePattern = `(?:${desktopWorkspaces.join("|")})`;
+const lineEnd = String.raw`(?:\r?\n|(?![\s\S]))`;
+const blockOf = (name: string) =>
+  new RegExp(
+    String.raw`^.*${name}:start.*\r?\n[\s\S]*?^.*${name}:end.*` + lineEnd,
+    "gm",
+  );
+const markerOf = (name: string) =>
+  new RegExp(String.raw`^.*${name}:(?:start|end).*` + lineEnd, "gm");
+const desktopBlock = blockOf("desktop");
+const desktopMarker = markerOf("desktop");
+const webOnlyBlock = blockOf("web-only");
+const webOnlyMarker = markerOf("web-only");
+const removableDesktopLine = new RegExp(
+  String.raw`^(?:[ \t]*["'][^"'\n]*${desktopWorkspacePattern}[^"'\n]*["'],?[ \t]*|[^\s]*${desktopWorkspacePattern}[^\s]*|[ \t]*(?:[-*|]|\d+\.)[ \t].*${desktopWorkspacePattern}.*)` +
+    lineEnd,
+  "gm",
+);
+const removableDesktopEntry = new RegExp(
+  String.raw`,[ \t]*(["'])[^"'\n]*${desktopWorkspacePattern}[^"'\n]*\1`,
+  "g",
+);
+const unsupportedCharacters = /["\\\p{Cc}]/u;
+const unsupportedDesktopNameCharacters = /[*/:<>?|]/;
 
 const renamedFiles = new Map([
   ["_gitignore", ".gitignore"],
@@ -22,6 +76,8 @@ const renamedFiles = new Map([
 const skippedFiles = new Set([
   "node_modules",
   ".next",
+  ".vite",
+  "out",
   "coverage",
   ".env",
   ".DS_Store",
@@ -38,18 +94,6 @@ const starterFiles = new Set([
   "README.md",
 ]);
 
-const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description <text>] [--db-port <port>]
-
-  name           Display name of the new project. The folder and package names
-                 are derived from it: "SunnyRadish" becomes sunnyradish.
-  .              Scaffold into the current directory instead. It must be empty
-                 apart from .git and the files GitHub adds to a new repository.
-  --description  One sentence for the README, package.json, and the home page.
-  --db-port      Host port for the PostgreSQL container (default 5432). Give
-                 each project its own to run their databases side by side.
-
-Whatever is not given is asked for.`;
-
 function fail(message: string): never {
   console.error(styleText("red", message, { stream: process.stderr }));
   process.exit(1);
@@ -62,57 +106,10 @@ function slugify(name: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-async function ask(question: string, defaultValue = "") {
-  if (!process.stdin.isTTY) {
-    if (defaultValue) {
-      return defaultValue;
-    }
-    fail(
-      `${question} is required when there is no terminal to ask in.\n\n${usage}`,
-    );
-  }
-  const prompt = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  try {
-    let answer = "";
-    while (!answer) {
-      const hint = defaultValue ? ` (${defaultValue})` : "";
-      answer =
-        (await prompt.question(`${question}${hint}: `)).trim() || defaultValue;
-    }
-    return answer;
-  } finally {
-    prompt.close();
-  }
-}
-
-function parseArguments() {
-  try {
-    return parseArgs({
-      allowPositionals: true,
-      options: {
-        description: { type: "string", short: "d" },
-        "db-port": { type: "string", default: "5432" },
-        help: { type: "boolean", short: "h" },
-      },
-    });
-  } catch (error) {
-    fail(
-      `${error instanceof Error ? error.message : String(error)}\n\n${usage}`,
-    );
-  }
-}
-
-const { values, positionals } = parseArguments();
-
-if (values.help) {
-  console.log(usage);
-  process.exit(0);
-}
-if (positionals.length > 1) {
-  fail(`Expected one name, got ${positionals.length}.\n\n${usage}`);
+if (process.argv.length > 2) {
+  fail(
+    "This command takes no arguments. Run it without any and answer its questions.",
+  );
 }
 
 const nodeMajor = Number.parseInt(process.versions.node, 10);
@@ -120,21 +117,73 @@ if (nodeMajor < 26) {
   fail(`Node.js 26 or newer is required; this is ${process.version}.`);
 }
 
-const dbPort = values["db-port"];
-if (!/^\d+$/.test(dbPort) || Number(dbPort) < 1 || Number(dbPort) > 65535) {
-  fail(`--db-port must be a port number from 1 to 65535, got "${dbPort}".`);
+const terminal = process.stdin.isTTY ? process.stdout.isTTY : false;
+const prompt = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal,
+});
+const answers = prompt[Symbol.asyncIterator]();
+
+async function ask(question: string, defaultValue = "") {
+  const hint = defaultValue ? ` (${defaultValue})` : "";
+  const text = `${question}${hint}: `;
+  for (;;) {
+    if (terminal) {
+      prompt.setPrompt(text);
+      prompt.prompt();
+    } else {
+      process.stdout.write(text);
+    }
+    const line = await answers.next();
+    if (line.done) {
+      fail(`\nThe input ended before "${question}" was answered.`);
+    }
+    const answer = line.value.trim() || defaultValue;
+    if (!process.stdin.isTTY) {
+      console.log(answer);
+    }
+    if (answer) {
+      return answer;
+    }
+  }
 }
 
-const inPlace = positionals[0] === ".";
+const nameAnswer = await ask("Project name, or . to use the current directory");
+const inPlace = nameAnswer === ".";
 const name = inPlace
   ? await ask("Project name", path.basename(process.cwd()))
-  : (positionals[0] ?? (await ask("Project name")));
+  : nameAnswer;
+if (unsupportedCharacters.test(name)) {
+  fail(
+    `"${name}" contains a character that cannot be used in the project name: " \\ or a control character`,
+  );
+}
 const slug = slugify(name);
 if (!slug) {
   fail(`"${name}" has no letters or digits to name the packages after.`);
 }
-const description =
-  (values.description ?? "").trim() || (await ask("Description"));
+const description = await ask("Description");
+if (unsupportedCharacters.test(description)) {
+  fail(
+    `The description contains a character that cannot be used in it: " \\ or a control character`,
+  );
+}
+const dbPort = await ask("Database port", "5432");
+if (!/^\d+$/.test(dbPort) || Number(dbPort) < 1 || Number(dbPort) > 65535) {
+  fail(`The database port must be a number from 1 to 65535, got "${dbPort}".`);
+}
+const desktopAnswer = await ask("Add an Electron desktop app?", "yes");
+if (!/^(?:y|yes|n|no)$/i.test(desktopAnswer)) {
+  fail(`Answer yes or no to the desktop app, got "${desktopAnswer}".`);
+}
+const desktop = /^y/i.test(desktopAnswer);
+prompt.close();
+if (desktop && unsupportedDesktopNameCharacters.test(name)) {
+  fail(
+    `"${name}" contains a character that cannot be used in the name of a project with a desktop app: * / : < > ? |`,
+  );
+}
 const targetDir = inPlace ? process.cwd() : path.resolve(slug);
 
 if (fs.existsSync(targetDir)) {
@@ -160,30 +209,185 @@ const placeholderPattern = new RegExp(
   [...replacements.keys()].map(escapeRegExp).join("|"),
   "g",
 );
-const fill = (text: string) =>
-  text.replace(placeholderPattern, (match) => replacements.get(match) ?? match);
+const fill = (text: string, escape = (value: string) => value) =>
+  text.replace(placeholderPattern, (match) =>
+    escape(replacements.get(match) ?? match),
+  );
+const escapeTableCell = (value: string) =>
+  value.replaceAll("|", String.raw`\|`);
 
-function copyTemplate(sourceDir: string, destinationDir: string) {
+type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
+
+function isJsonObject(value: Json): value is Record<string, Json> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+const dependencyFields = [
+  "dependencies",
+  "devDependencies",
+  "optionalDependencies",
+  "peerDependencies",
+];
+
+function sortDependencies(text: string) {
+  const manifest = JSON.parse(text) as Record<string, Json>;
+  for (const field of dependencyFields) {
+    const dependencies = manifest[field];
+    if (dependencies !== undefined && isJsonObject(dependencies)) {
+      manifest[field] = Object.fromEntries(
+        Object.entries(dependencies).sort(([a], [b]) =>
+          a.localeCompare(b, "en"),
+        ),
+      );
+    }
+  }
+  return `${JSON.stringify(manifest, null, 2)}\n`;
+}
+
+function render(relative: string, text: string) {
+  if (path.basename(relative) === "package.json") {
+    return sortDependencies(fill(text));
+  }
+  if (path.extname(relative) === ".md") {
+    return text
+      .split("\n")
+      .map((line) =>
+        line.startsWith("|") ? fill(line, escapeTableCell) : fill(line),
+      )
+      .join("\n");
+  }
+  return fill(text);
+}
+
+function mergePatch(target: Json, patch: Json): Json {
+  if (!isJsonObject(patch)) {
+    return patch;
+  }
+  const merged = new Map(Object.entries(isJsonObject(target) ? target : {}));
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === null) {
+      merged.delete(key);
+    } else {
+      merged.set(key, mergePatch(merged.get(key) ?? null, value));
+    }
+  }
+  return Object.fromEntries(merged);
+}
+
+function applyWebOnly(relative: string, text: string) {
+  const variant = path.join(webOnlyDir, relative);
+  if (!fs.existsSync(variant)) {
+    return text;
+  }
+  const variantText = fs.readFileSync(variant, "utf8");
+  if (path.extname(relative) !== ".json") {
+    return variantText;
+  }
+  const merged = mergePatch(
+    JSON.parse(text) as Json,
+    JSON.parse(variantText) as Json,
+  );
+  return `${JSON.stringify(merged, null, 2)}\n`;
+}
+
+function checkMarkers(relative: string, text: string) {
+  for (const name of ["desktop", "web-only"]) {
+    const markers = [
+      ...text.matchAll(new RegExp(`${name}:(start|end)`, "g")),
+    ].map(([, kind]) => kind);
+    if (markers.some((kind, index) => kind !== (index % 2 ? "end" : "start"))) {
+      fail(`${relative} has unbalanced ${name}:start and ${name}:end markers.`);
+    }
+  }
+}
+
+function selectVariant(relative: string, text: string) {
+  if (path.basename(relative) === "package-lock.json") {
+    return text;
+  }
+  checkMarkers(relative, text);
+  return desktop
+    ? text.replace(webOnlyBlock, "").replace(desktopMarker, "")
+    : removeDesktop(relative, text);
+}
+
+function removeDesktop(relative: string, text: string) {
+  if (relative === "package.json") {
+    const manifest = JSON.parse(text) as {
+      workspaces: string[];
+      scripts: Record<string, string>;
+    };
+    manifest.workspaces = manifest.workspaces.filter(
+      (workspace) => !desktopWorkspaces.includes(workspace),
+    );
+    manifest.scripts = Object.fromEntries(
+      Object.entries(manifest.scripts).filter(
+        ([, command]) =>
+          !desktopWorkspaces.some((workspace) => command.includes(workspace)),
+      ),
+    );
+    return `${JSON.stringify(manifest, null, 2)}\n`;
+  }
+  const stripped = text
+    .replace(desktopBlock, "")
+    .replace(webOnlyMarker, "")
+    .replace(removableDesktopLine, "")
+    .replace(removableDesktopEntry, "");
+  const leftover = stripped
+    .split("\n")
+    .find((line) => desktopNames.some((name) => line.includes(name)));
+  if (leftover !== undefined) {
+    fail(
+      `${relative}: "${leftover.trim()}" names a workspace that only a project with the desktop app has, but is not a list entry, an ignore path, or a Markdown list item or table row. Put it between desktop:start and desktop:end markers, or give the file a variant in template-web-only.`,
+    );
+  }
+  return stripped;
+}
+
+function copyTemplate(
+  sourceDir: string,
+  destinationDir: string,
+  rootDir = sourceDir,
+) {
   fs.mkdirSync(destinationDir, { recursive: true });
   for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
-    if (skippedFiles.has(entry.name)) {
+    const source = path.join(sourceDir, entry.name);
+    const relative = path.relative(rootDir, source);
+    const fromTemplate = rootDir === templateDir;
+    if (
+      skippedFiles.has(entry.name) ||
+      (!desktop && desktopOnlyPaths.has(relative)) ||
+      (!desktop && fromTemplate && webOnlyMoveTargets.has(relative)) ||
+      (!fromTemplate && relative === variantManifest)
+    ) {
       continue;
     }
-    const source = path.join(sourceDir, entry.name);
     const destination = path.join(
       destinationDir,
       renamedFiles.get(entry.name) ?? fill(entry.name),
     );
     if (entry.isDirectory()) {
-      copyTemplate(source, destination);
+      copyTemplate(source, destination, rootDir);
+      continue;
+    }
+    if (!fromTemplate && fs.existsSync(path.join(templateDir, relative))) {
       continue;
     }
     const content = fs.readFileSync(source);
-    fs.writeFileSync(
-      destination,
-      content.includes(0) ? content : fill(content.toString("utf8")),
-      { mode: fs.statSync(source).mode },
+    if (content.includes(0)) {
+      fs.writeFileSync(destination, content, {
+        mode: fs.statSync(source).mode,
+      });
+      continue;
+    }
+    const text = content.toString("utf8");
+    const selected = selectVariant(
+      relative,
+      !desktop && fromTemplate ? applyWebOnly(relative, text) : text,
     );
+    fs.writeFileSync(destination, render(relative, selected), {
+      mode: fs.statSync(source).mode,
+    });
   }
 }
 
@@ -228,9 +432,19 @@ function run(command: string, commandArgs: string[]) {
 
 console.log(styleText("bold", `\n▶ Creating ${name} in ${targetDir}`));
 copyTemplate(templateDir, targetDir);
+if (!desktop) {
+  copyTemplate(webOnlyDir, targetDir);
+  for (const [from, to] of webOnlyMoves) {
+    const text = fs.readFileSync(path.join(templateDir, from), "utf8");
+    fs.writeFileSync(
+      path.join(targetDir, fill(to)),
+      render(to, selectVariant(to, text)),
+    );
+  }
+}
 const envCount = writeEnvFiles(targetDir);
 console.log(
-  `  copied the template and wrote ${envCount} .env files with local defaults`,
+  `  copied the template and wrote ${String(envCount)} .env files with local defaults`,
 );
 
 if (!fs.existsSync(path.join(targetDir, ".git"))) {
@@ -239,10 +453,14 @@ if (!fs.existsSync(path.join(targetDir, ".git"))) {
 run("npm", ["install"]);
 run("npm", ["run", "format", "--silent", "--", "--log-level", "warn"]);
 
+const desktopStep = desktop
+  ? "\n  npm run dev:desktop   desktop app, which calls the API"
+  : "";
+
 console.log(`
 ${styleText("green", "✔")} ${styleText("bold", name)} is ready. Next:
 ${inPlace ? "" : `\n  cd ${slug}`}
   npm run db:start      PostgreSQL in Docker on port ${dbPort}, migrations applied
   npm run dev           web app on http://localhost:3000
-  npm run dev:server    API on http://localhost:4000
+  npm run dev:server    API on http://localhost:4000${desktopStep}
 `);

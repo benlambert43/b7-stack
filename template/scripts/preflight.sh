@@ -28,6 +28,9 @@ run test
 
 if [ "$with_build" -eq 1 ]; then
   run build
+  # desktop:start
+  run build:desktop
+  # desktop:end
 else
   skip build "--no-build"
 fi

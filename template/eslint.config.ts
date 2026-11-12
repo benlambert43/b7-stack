@@ -1,3 +1,6 @@
+// desktop:start
+import { builtinModules, createRequire } from "node:module";
+// desktop:end
 import path from "node:path";
 
 import js from "@eslint/js";
@@ -5,8 +8,29 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import betterTailwindcss from "eslint-plugin-better-tailwindcss";
+// desktop:start
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
+// desktop:end
 import globals from "globals";
 import tseslint from "typescript-eslint";
+
+// desktop:start
+const nodeGlobals = Object.keys(globals.node).filter(
+  (name) => !(name in globals.browser),
+);
+
+const browserGlobals = Object.keys(globals.browser).filter(
+  (name) => !(name in globals.node),
+);
+
+const nodeModules = ["node:*", ...builtinModules];
+
+const { version: reactVersion } = createRequire(import.meta.url)(
+  "react/package.json",
+) as { version: string };
+// desktop:end
 
 export default defineConfig([
   globalIgnores(["**/.next/", "**/coverage/", "**/next-env.d.ts"]),
@@ -33,10 +57,6 @@ export default defineConfig([
     },
     rules: {
       "@typescript-eslint/no-deprecated": "error",
-      "@typescript-eslint/restrict-template-expressions": [
-        "error",
-        { allowNumber: true },
-      ],
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
@@ -65,16 +85,99 @@ export default defineConfig([
       ],
     },
   },
+  // desktop:start
   {
-    files: ["b7-stack-web/**/*.{ts,tsx}"],
-    extends: [betterTailwindcss.configs.recommended],
+    files: ["b7-stack-shared/src/**/*.ts"],
     rules: {
-      "better-tailwindcss/enforce-consistent-class-order": "off",
-      "better-tailwindcss/enforce-consistent-line-wrapping": "off",
-      "better-tailwindcss/enforce-consistent-variant-order": "warn",
+      "no-restricted-globals": [
+        "error",
+        ...browserGlobals.map((name) => ({
+          name,
+          message:
+            "This code runs in Node.js as well as in browser windows, so use only what both have.",
+        })),
+      ],
     },
+  },
+  {
+    files: [
+      "b7-stack-ui/src/**/*.{ts,tsx}",
+      "b7-stack-desktop/src/renderer/**/*.{ts,tsx}",
+    ],
+    extends: [
+      react.configs.flat.recommended,
+      react.configs.flat["jsx-runtime"],
+      reactHooks.configs.flat.recommended,
+      jsxA11y.flatConfigs.recommended,
+    ],
+    settings: { react: { version: reactVersion } },
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        ...nodeGlobals.map((name) => ({
+          name,
+          message:
+            "This code runs in a browser window, where Node.js globals do not exist.",
+        })),
+      ],
+    },
+  },
+  {
+    files: ["b7-stack-ui/src/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["next", "next/*", ...nodeModules, "electron"],
+              message:
+                "Shared components render wherever an app puts them. Take data and actions as props instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // desktop:end
+  {
+    files: ["b7-stack-web/**/*.{ts,tsx}", "b7-stack-ui/**/*.{ts,tsx}"],
+    extends: [betterTailwindcss.configs.recommended],
+    rules: { "better-tailwindcss/enforce-consistent-line-wrapping": "off" },
     settings: {
       "better-tailwindcss": { entryPoint: "b7-stack-web/app/globals.css" },
     },
   },
+  // desktop:start
+  globalIgnores(["b7-stack-desktop/.vite/", "b7-stack-desktop/out/"]),
+  {
+    files: ["b7-stack-desktop/src/renderer/**/*.{ts,tsx}"],
+    extends: [betterTailwindcss.configs.recommended],
+    rules: {
+      "better-tailwindcss/enforce-consistent-line-wrapping": "off",
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["electron", "electron/*", ...nodeModules],
+              message:
+                "The renderer is a sandboxed browser window. Reach the main process through window.bridge.",
+            },
+            {
+              regex: "^(?:@/|(?:\\.\\./)+)(?:main|preload)(?:/|$)",
+              message:
+                "The renderer is a sandboxed browser window. Reach the main process through window.bridge.",
+            },
+          ],
+        },
+      ],
+    },
+    settings: {
+      "better-tailwindcss": {
+        entryPoint: "b7-stack-desktop/src/renderer/globals.css",
+      },
+    },
+  },
+  // desktop:end
 ]);

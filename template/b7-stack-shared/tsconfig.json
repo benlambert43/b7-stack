@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "nodenext",
     "target": "esnext",
-    "lib": ["esnext"],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "types": [],
     "noEmit": true,
     "allowImportingTsExtensions": true,

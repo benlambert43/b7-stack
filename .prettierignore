@@ -1,4 +1,5 @@
 template/
+template-web-only/
 dist/
 package-lock.json
 package.json

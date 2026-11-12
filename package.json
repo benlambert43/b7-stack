@@ -1,7 +1,7 @@
 {
   "name": "create-b7-stack",
   "version": "0.1.0",
-  "description": "Scaffolds a new project from the B7 Stack template: Next.js, Express, Drizzle, and PostgreSQL in one npm workspace.",
+  "description": "Scaffolds a new project from the B7 Stack template: Next.js, Express, Drizzle, and PostgreSQL in one npm workspace, with an optional Electron desktop app.",
   "private": true,
   "type": "module",
   "bin": {
@@ -9,7 +9,17 @@
   },
   "files": [
     "dist",
-    "template"
+    "template",
+    "template-web-only",
+    "!template-web-only/variants.json",
+    "!template/**/node_modules",
+    "!template/**/.next",
+    "!template/**/.vite",
+    "!template/**/out",
+    "!template/**/coverage",
+    "!template/**/.env",
+    "!template/**/next-env.d.ts",
+    "!template/**/*.tsbuildinfo"
   ],
   "engines": {
     "node": ">=26"
@@ -22,19 +32,20 @@
     "lint:shell": "shellcheck .husky/pre-commit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preflight": "npm run format:check && npm run typecheck && npm run lint && npm run lint:shell && npm run lint:editor",
-    "lint:editor": "node template/scripts/check-editor-settings.ts"
+    "preflight": "npm run format:check && npm run typecheck && npm run lint && npm run lint:shell && npm run lint:editor && npm run lint:variants",
+    "lint:editor": "node template/scripts/check-editor-settings.ts",
+    "lint:variants": "node scripts/check-variants.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
     "eslint": "^10.14.0",
-    "globals": "^17.13.0",
+    "globals": "^17.14.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
     "lint-staged": "^17.6.0",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.1"
+    "typescript-eslint": "^8.72.2"
   }
 }

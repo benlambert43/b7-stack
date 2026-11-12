@@ -5,7 +5,7 @@ export default defineConfig({
     () => "npm run typecheck",
     "eslint --max-warnings 0 --fix --no-warn-ignored",
     "prettier --write",
-    "vitest related --run",
+    "vitest related --run --passWithNoTests",
   ],
   "!(*.ts|*.tsx|*.mts|*.cts|*.js|*.mjs|*.cjs)":
     "prettier --write --ignore-unknown",
