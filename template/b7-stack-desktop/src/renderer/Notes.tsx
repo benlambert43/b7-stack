@@ -44,8 +44,6 @@ export function Notes() {
   ): Promise<Result> {
     const result = await action;
     if (!result.error) {
-      // A transition keeps the current list on screen while the new one
-      // loads, instead of showing the Suspense fallback in its place.
       startTransition(() => {
         setNotes(loadNotes());
       });

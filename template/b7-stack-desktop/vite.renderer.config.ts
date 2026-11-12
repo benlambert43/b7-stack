@@ -6,8 +6,6 @@ import { defineConfig, loadEnv } from "vite";
 import { contentSecurityPolicy } from "./src/contentSecurityPolicy.ts";
 import { envSchema } from "./src/envSchema.ts";
 
-// The environment is compiled into the app, so a missing or invalid value fails
-// the build here instead of the app when it starts on someone's machine.
 function loadAppEnv(mode: string) {
   const parsed = envSchema.safeParse(
     loadEnv(mode, import.meta.dirname, "VITE_"),
@@ -25,8 +23,6 @@ export default defineConfig(({ mode }) => {
   return {
     build: { target: "esnext" },
     server: {
-      // The API allows requests from this dev server by its address, so it has
-      // to fail when the port is taken instead of quietly moving to the next one.
       port: 5173,
       strictPort: true,
       headers: {
@@ -38,8 +34,6 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       tsconfigPaths: true,
-      // Follows the workspace links to the shared packages, so that they are
-      // source to watch and hot-reload instead of dependencies to cache.
       preserveSymlinks: false,
     },
     plugins: [

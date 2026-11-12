@@ -84,8 +84,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # The address is compiled into the app and .env is not committed. This
-      # build only proves the app packages; a release needs the production URL.
       - run: npm run build:desktop
         env:
           VITE_API_BASE_URL: http://localhost:4000

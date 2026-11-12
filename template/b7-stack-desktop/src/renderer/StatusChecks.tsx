@@ -4,8 +4,6 @@ import { Suspense, use, useState } from "react";
 
 import { getHealth } from "@/renderer/api.ts";
 
-// window.bridge exists only in the app's own window: the same page opened in a
-// browser tab has none, and a call the main process refuses rejects.
 function loadAppVersion(): Promise<string | null> {
   if (!("bridge" in window)) {
     return Promise.resolve(null);

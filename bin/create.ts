@@ -15,7 +15,6 @@ const placeholders = {
 };
 
 const desktopWorkspace = `${placeholders.slug}-desktop`;
-// A line ends with a line break or with the end of the file.
 const lineEnd = String.raw`(?:\r?\n|(?![\s\S]))`;
 const desktopBlock = new RegExp(
   String.raw`^.*desktop:start.*\r?\n[\s\S]*?^.*desktop:end.*` + lineEnd,
@@ -25,19 +24,13 @@ const desktopMarker = new RegExp(
   String.raw`^.*desktop:(?:start|end).*` + lineEnd,
   "gm",
 );
-// The only lines outside markers that may name the desktop folder, so that
-// removing them whole cannot leave a changed statement behind: an entry of a
-// list that is one per line (a quoted string, optionally followed by a comma),
-// a path in an ignore file, or a Markdown list item or table row.
 const removableDesktopLine = new RegExp(
   String.raw`^(?:[ \t]*["'][^"'\n]*${desktopWorkspace}[^"'\n]*["'],?[ \t]*|[^\s]*${desktopWorkspace}[^\s]*|[ \t]*(?:[-*|]|\d+\.)[ \t].*${desktopWorkspace}.*)` +
     lineEnd,
   "gm",
 );
-// Characters that cannot appear in a file name on Windows, where Electron
-// derives the app's data folder from the name, or that break the JSON and
-// TypeScript the name is written into.
-const unsupportedNameCharacters = /["*/:<>?\\|\p{Cc}]/u;
+const unsupportedNameCharacters = /["\\\p{Cc}]/u;
+const unsupportedDesktopNameCharacters = /[*/:<>?|]/;
 
 const renamedFiles = new Map([
   ["_gitignore", ".gitignore"],
@@ -178,7 +171,7 @@ const name = inPlace
   : (positionals[0] ?? (await ask("Project name")));
 if (unsupportedNameCharacters.test(name)) {
   fail(
-    `"${name}" contains a character that cannot be used in the project name: " * / : < > ? \\ |`,
+    `"${name}" contains a character that cannot be used in the project name: " \\ or a control character`,
   );
 }
 const slug = slugify(name);
@@ -189,6 +182,11 @@ const description =
   (values.description ?? "").trim() || (await ask("Description"));
 const desktop =
   values.desktop ?? (await confirm("Add an Electron desktop app?"));
+if (desktop && unsupportedDesktopNameCharacters.test(name)) {
+  fail(
+    `"${name}" contains a character that cannot be used in the name of a project with a desktop app: * / : < > ? |`,
+  );
+}
 const targetDir = inPlace ? process.cwd() : path.resolve(slug);
 
 if (fs.existsSync(targetDir)) {

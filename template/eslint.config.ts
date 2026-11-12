@@ -18,16 +18,12 @@ const tailwindRules = {
   "better-tailwindcss/enforce-consistent-variant-order": "warn",
 } as const;
 
-// Globals that Node.js has and a browser window does not.
 const nodeGlobals = Object.keys(globals.node).filter(
   (name) => !(name in globals.browser),
 );
 
-// Node.js modules under either spelling, such as fs and node:fs.
 const nodeModules = ["node:*", ...builtinModules];
 
-// eslint-plugin-react's "detect" setting calls an API that ESLint 10 removed,
-// so the installed React version is passed in instead.
 const { version: reactVersion } = createRequire(import.meta.url)(
   "react/package.json",
 ) as { version: string };
@@ -162,8 +158,6 @@ export default defineConfig([
                 "The renderer is a sandboxed browser window. Reach the main process through window.bridge.",
             },
             {
-              // The main process's and preload script's own files, by alias
-              // or by relative path.
               regex: "^(?:@/|(?:\\.\\./)+)(?:main|preload)(?:/|$)",
               message:
                 "The renderer is a sandboxed browser window. Reach the main process through window.bridge.",

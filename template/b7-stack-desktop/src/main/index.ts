@@ -16,14 +16,9 @@ import { contentSecurityPolicy } from "@/contentSecurityPolicy.ts";
 import { env } from "@/env.ts";
 import { handlers } from "@/main/handlers.ts";
 
-// Forge defines the dev server's address only for `electron-forge start`. Every
-// production build, packaged or not, has `undefined` in its place and serves
-// the built files itself over app://, which has a real origin, unlike file://.
 const devServerUrl = MAIN_WINDOW_VITE_DEV_SERVER_URL as string | undefined;
 const renderer = new URL(devServerUrl ?? "app://renderer");
 
-// Forge bundles this file as CommonJS into .vite/build, next to the preload
-// script and one folder away from the renderer's files.
 const preload = path.join(__dirname, "preload.cjs");
 const rendererFiles = path.join(
   __dirname,
@@ -35,8 +30,6 @@ const policy = contentSecurityPolicy(env.VITE_API_BASE_URL, {
   devServer: false,
 });
 
-// What the window may do without asking. Every other permission is refused,
-// both when the page requests it and when Chromium only checks it.
 const grantedPermissions = new Set(["clipboard-sanitized-write", "fullscreen"]);
 
 function isRenderer(url = ""): boolean {
@@ -64,7 +57,6 @@ async function serveRendererFile(request: Request): Promise<Response> {
   if (host !== renderer.host || !file.startsWith(rendererFiles + path.sep)) {
     return new Response(null, { status: 404 });
   }
-  // net.fetch rejects for a missing file or a directory.
   const response = await net.fetch(pathToFileURL(file).href).catch(() => null);
   if (!response) {
     return new Response(null, { status: 404 });
@@ -74,7 +66,6 @@ async function serveRendererFile(request: Request): Promise<Response> {
   return new Response(response.body, { status: response.status, headers });
 }
 
-// Links and window.open calls to https addresses open in the default browser.
 function openInBrowser(url: string): void {
   if (URL.parse(url)?.protocol === "https:") {
     shell.openExternal(url).catch((error: unknown) => {
@@ -87,12 +78,9 @@ function createWindow(): void {
   const window = new BrowserWindow({
     width: 960,
     height: 720,
-    // Matches --background in the shared theme, so the window never flashes white.
     backgroundColor: nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#ffffff",
     webPreferences: {
       preload,
-      // Keeps the compiled script from the first launch on, instead of only
-      // after V8 has seen it twice within 72 hours.
       v8CacheOptions: "bypassHeatCheck",
     },
   });
@@ -138,8 +126,6 @@ function start(): void {
   app.on("activate", showWindow);
 }
 
-// The dev app keeps its own profile and single-instance lock, so it runs
-// beside an installed copy of the app instead of handing over to it.
 if (devServerUrl) {
   app.setPath("userData", `${app.getPath("userData")} (development)`);
 }
@@ -177,7 +163,6 @@ app.on("window-all-closed", () => {
   }
 });
 
-// A second launch hands over to the instance that is already running.
 if (app.requestSingleInstanceLock()) {
   app.on("second-instance", showWindow);
   void app.whenReady().then(start);
