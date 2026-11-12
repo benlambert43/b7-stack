@@ -9,13 +9,18 @@
   },
   "workspaces": [
     "b7-stack-shared",
+    "b7-stack-ui",
     "b7-stack-server",
-    "b7-stack-web"
+    "b7-stack-web",
+    "b7-stack-desktop"
   ],
   "scripts": {
     "dev": "npm run dev --workspace b7-stack-web",
     "dev:server": "npm run dev --workspace b7-stack-server",
+    "dev:desktop": "npm run dev --workspace b7-stack-desktop",
     "build": "npm run build --workspace b7-stack-web",
+    "build:desktop": "npm run build --workspace b7-stack-desktop",
+    "make:desktop": "npm run make --workspace b7-stack-desktop",
     "db:start": "docker compose -f docker-compose.dev.yml up --detach --wait --wait-timeout 60 && npm run db:migrate",
     "db:stop": "docker compose -f docker-compose.dev.yml down",
     "db:generate": "npm run db:generate --workspace b7-stack-server",
@@ -28,8 +33,10 @@
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces",
     "test": "vitest run",
     "test:shared": "vitest run --project b7-stack-shared",
+    "test:ui": "vitest run --project b7-stack-ui",
     "test:server": "vitest run --project b7-stack-server",
     "test:web": "vitest run --project b7-stack-web",
+    "test:desktop": "vitest run --project b7-stack-desktop",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "format": "prettier --write .",
@@ -44,28 +51,34 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/eslint-plugin-jsx-a11y": "^6.10.1",
     "@types/node": "^26.6.6",
-    "@vitest/coverage-v8": "^5.0.5",
-    "eslint": "^10.13.0",
-    "eslint-config-next": "16.4.3",
-    "eslint-plugin-better-tailwindcss": "^4.10.0",
-    "globals": "^17.13.0",
+    "@vitest/coverage-v8": "^5.1.0",
+    "eslint": "^10.14.0",
+    "eslint-config-next": "16.4.6",
+    "eslint-plugin-better-tailwindcss": "^4.11.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
     "lint-staged": "^17.6.0",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.0",
     "prettier-plugin-classnames": "^0.10.5",
     "prettier-plugin-merge": "^0.10.2",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.1",
-    "vitest": "^5.0.5"
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
   },
   "overrides": {
-    "eslint": "$eslint"
+    "eslint": "$eslint",
+    "@esbuild-kit/core-utils": {
+      "esbuild": ">=0.25.0"
+    }
   },
   "allowScripts": {
-    "unrs-resolver": true,
     "fsevents": true,
     "esbuild": true
   }

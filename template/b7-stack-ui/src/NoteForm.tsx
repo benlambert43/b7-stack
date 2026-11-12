@@ -3,12 +3,15 @@
 import { NOTE_BODY_MAX_LENGTH } from "@b7-stack/shared";
 import { useActionState } from "react";
 
-import { createNote, type NoteFormState } from "@/app/_actions/notes.ts";
+import type { CreateNoteAction, NoteFormState } from "./noteForm.ts";
 
 const initialState: NoteFormState = { body: "", error: null };
 
-export function NoteForm() {
-  const [state, formAction, pending] = useActionState(createNote, initialState);
+export function NoteForm({ createAction }: { createAction: CreateNoteAction }) {
+  const [state, formAction, pending] = useActionState(
+    createAction,
+    initialState,
+  );
 
   return (
     <form action={formAction} className="flex flex-col gap-2">

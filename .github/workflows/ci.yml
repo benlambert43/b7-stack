@@ -15,9 +15,17 @@ permissions:
 
 jobs:
   scaffold:
-    name: Scaffold and check a project
+    name: Scaffold and check a project (${{ matrix.variant }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: web only
+            flags: ""
+          - variant: with the desktop app
+            flags: --desktop
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -32,9 +40,14 @@ jobs:
       - name: Generate a project the way npx does
         env:
           PACKAGE: github:${{ github.repository }}#${{ github.event.pull_request.head.sha || github.sha }}
-        run: npx --yes "$PACKAGE" "Demo App" --description "A project generated in CI."
+        run: npx --yes "$PACKAGE" "Demo App" --description "A project generated in CI." ${{ matrix.flags }}
       - name: Check that no placeholder survived
         run: "! grep -rIiE 'b7[-_ ]?stack' demo-app --exclude-dir=node_modules --exclude-dir=.git"
+      - name: Check that no template marker survived
+        run: "! grep -rIE 'desktop:(start|end)' demo-app --exclude-dir=node_modules --exclude-dir=.git"
+      - name: Check that nothing of the desktop app was copied
+        if: ${{ matrix.flags == '' }}
+        run: "! grep -rIi 'desktop' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Preflight the project
         run: npm run preflight
         working-directory: demo-app

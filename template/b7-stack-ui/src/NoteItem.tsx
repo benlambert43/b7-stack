@@ -9,21 +9,29 @@ import {
 } from "@heroicons/react/24/outline";
 import { useActionState, useState } from "react";
 
-import {
-  deleteNote,
-  type NoteFormState,
-  updateNote,
-} from "@/app/_actions/notes.ts";
+import type {
+  DeleteNoteAction,
+  NoteFormState,
+  UpdateNoteAction,
+} from "./noteForm.ts";
 
 const iconButtonClassName =
   "rounded-md p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-100";
 
-export function NoteItem({ note }: { note: Note }) {
+export function NoteItem({
+  note,
+  updateAction,
+  deleteAction,
+}: {
+  note: Note;
+  updateAction: UpdateNoteAction;
+  deleteAction: DeleteNoteAction;
+}) {
   const [editing, setEditing] = useState(false);
 
-  const [editState, editAction, editPending] = useActionState(
+  const [editState, submitEdit, editPending] = useActionState(
     async (previousState: NoteFormState, formData: FormData) => {
-      const result = await updateNote(note.id, previousState, formData);
+      const result = await updateAction(note.id, previousState, formData);
       if (!result.error) {
         setEditing(false);
       }
@@ -32,8 +40,8 @@ export function NoteItem({ note }: { note: Note }) {
     { body: note.body, error: null },
   );
 
-  const [deleteState, deleteAction, deletePending] = useActionState(
-    () => deleteNote(note.id),
+  const [deleteState, submitDelete, deletePending] = useActionState(
+    () => deleteAction(note.id),
     { error: null },
   );
 
@@ -42,7 +50,7 @@ export function NoteItem({ note }: { note: Note }) {
   if (editing) {
     return (
       <li className="py-3">
-        <form action={editAction} className="flex items-start gap-2">
+        <form action={submitEdit} className="flex items-start gap-2">
           <label htmlFor={`note-${note.id}`} className="sr-only">
             Edit note
           </label>
@@ -51,6 +59,7 @@ export function NoteItem({ note }: { note: Note }) {
             name="body"
             rows={2}
             required
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- Takes over the focus of the Edit button it replaces.
             autoFocus
             maxLength={NOTE_BODY_MAX_LENGTH}
             defaultValue={editState.error ? editState.body : note.body}
@@ -107,7 +116,7 @@ export function NoteItem({ note }: { note: Note }) {
         >
           <PencilSquareIcon aria-hidden className="size-5" />
         </button>
-        <form action={deleteAction}>
+        <form action={submitDelete}>
           <button
             type="submit"
             disabled={deletePending}

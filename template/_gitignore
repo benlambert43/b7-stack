@@ -5,6 +5,8 @@ node_modules
 *.pem
 
 b7-stack-web/.next/
+b7-stack-desktop/.vite/
+b7-stack-desktop/out/
 coverage/
 
 *.tsbuildinfo

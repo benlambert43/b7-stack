@@ -66,8 +66,27 @@ jobs:
         uses: actions/cache@v6
         with:
           path: b7-stack-web/.next/cache
-          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('b7-stack-web/app/**', 'b7-stack-shared/src/**') }}
+          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('b7-stack-web/app/**', 'b7-stack-shared/src/**', 'b7-stack-ui/src/**') }}
           restore-keys: |
             next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
             next-${{ runner.os }}-
       - run: npm run build
+
+  # desktop:start
+  desktop:
+    name: Desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # The address is compiled into the app and .env is not committed. This
+      # build only proves the app packages; a release needs the production URL.
+      - run: npm run build:desktop
+        env:
+          VITE_API_BASE_URL: http://localhost:4000
+  # desktop:end

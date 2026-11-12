@@ -1,7 +1,7 @@
 {
   "name": "create-b7-stack",
   "version": "0.1.0",
-  "description": "Scaffolds a new project from the B7 Stack template: Next.js, Express, Drizzle, and PostgreSQL in one npm workspace.",
+  "description": "Scaffolds a new project from the B7 Stack template: Next.js, Express, Drizzle, and PostgreSQL in one npm workspace, with an optional Electron desktop app.",
   "private": true,
   "type": "module",
   "bin": {
@@ -29,12 +29,12 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
     "eslint": "^10.14.0",
-    "globals": "^17.13.0",
+    "globals": "^17.14.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
     "lint-staged": "^17.6.0",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.1"
+    "typescript-eslint": "^8.72.2"
   }
 }

@@ -1,3 +1,4 @@
+import { builtinModules, createRequire } from "node:module";
 import path from "node:path";
 
 import js from "@eslint/js";
@@ -5,8 +6,31 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import betterTailwindcss from "eslint-plugin-better-tailwindcss";
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
+
+const tailwindRules = {
+  "better-tailwindcss/enforce-consistent-class-order": "off",
+  "better-tailwindcss/enforce-consistent-line-wrapping": "off",
+  "better-tailwindcss/enforce-consistent-variant-order": "warn",
+} as const;
+
+// Globals that Node.js has and a browser window does not.
+const nodeGlobals = Object.keys(globals.node).filter(
+  (name) => !(name in globals.browser),
+);
+
+// Node.js modules under either spelling, such as fs and node:fs.
+const nodeModules = ["node:*", ...builtinModules];
+
+// eslint-plugin-react's "detect" setting calls an API that ESLint 10 removed,
+// so the installed React version is passed in instead.
+const { version: reactVersion } = createRequire(import.meta.url)(
+  "react/package.json",
+) as { version: string };
 
 export default defineConfig([
   globalIgnores(["**/.next/", "**/coverage/", "**/next-env.d.ts"]),
@@ -66,15 +90,93 @@ export default defineConfig([
     },
   },
   {
-    files: ["b7-stack-web/**/*.{ts,tsx}"],
-    extends: [betterTailwindcss.configs.recommended],
+    files: [
+      "b7-stack-ui/src/**/*.{ts,tsx}",
+      "b7-stack-desktop/src/renderer/**/*.{ts,tsx}",
+    ],
+    extends: [
+      react.configs.flat.recommended,
+      react.configs.flat["jsx-runtime"],
+      reactHooks.configs.flat.recommended,
+      jsxA11y.flatConfigs.recommended,
+    ],
+    settings: { react: { version: reactVersion } },
     rules: {
-      "better-tailwindcss/enforce-consistent-class-order": "off",
-      "better-tailwindcss/enforce-consistent-line-wrapping": "off",
-      "better-tailwindcss/enforce-consistent-variant-order": "warn",
+      "react/prop-types": "off",
+      "no-restricted-globals": [
+        "error",
+        ...nodeGlobals.map((name) => ({
+          name,
+          message:
+            "This code runs in a browser window, where Node.js globals do not exist.",
+        })),
+      ],
     },
+  },
+  {
+    files: ["b7-stack-ui/src/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "next",
+                "next/*",
+                ...nodeModules,
+                // desktop:start
+                "electron",
+                // desktop:end
+              ],
+              message:
+                "Shared components render wherever an app puts them. Take data and actions as props instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["b7-stack-web/**/*.{ts,tsx}", "b7-stack-ui/**/*.{ts,tsx}"],
+    extends: [betterTailwindcss.configs.recommended],
+    rules: tailwindRules,
     settings: {
       "better-tailwindcss": { entryPoint: "b7-stack-web/app/globals.css" },
     },
   },
+  // desktop:start
+  globalIgnores(["b7-stack-desktop/.vite/", "b7-stack-desktop/out/"]),
+  {
+    files: ["b7-stack-desktop/src/renderer/**/*.{ts,tsx}"],
+    extends: [betterTailwindcss.configs.recommended],
+    rules: {
+      ...tailwindRules,
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["electron", "electron/*", ...nodeModules],
+              message:
+                "The renderer is a sandboxed browser window. Reach the main process through window.bridge.",
+            },
+            {
+              // The main process's and preload script's own files, by alias
+              // or by relative path.
+              regex: "^(?:@/|(?:\\.\\./)+)(?:main|preload)(?:/|$)",
+              message:
+                "The renderer is a sandboxed browser window. Reach the main process through window.bridge.",
+            },
+          ],
+        },
+      ],
+    },
+    settings: {
+      "better-tailwindcss": {
+        entryPoint: "b7-stack-desktop/src/renderer/globals.css",
+      },
+    },
+  },
+  // desktop:end
 ]);

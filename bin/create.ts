@@ -14,6 +14,31 @@ const placeholders = {
   slug: "b7-stack",
 };
 
+const desktopWorkspace = `${placeholders.slug}-desktop`;
+// A line ends with a line break or with the end of the file.
+const lineEnd = String.raw`(?:\r?\n|(?![\s\S]))`;
+const desktopBlock = new RegExp(
+  String.raw`^.*desktop:start.*\r?\n[\s\S]*?^.*desktop:end.*` + lineEnd,
+  "gm",
+);
+const desktopMarker = new RegExp(
+  String.raw`^.*desktop:(?:start|end).*` + lineEnd,
+  "gm",
+);
+// The only lines outside markers that may name the desktop folder, so that
+// removing them whole cannot leave a changed statement behind: an entry of a
+// list that is one per line (a quoted string, optionally followed by a comma),
+// a path in an ignore file, or a Markdown list item or table row.
+const removableDesktopLine = new RegExp(
+  String.raw`^(?:[ \t]*["'][^"'\n]*${desktopWorkspace}[^"'\n]*["'],?[ \t]*|[^\s]*${desktopWorkspace}[^\s]*|[ \t]*(?:[-*|]|\d+\.)[ \t].*${desktopWorkspace}.*)` +
+    lineEnd,
+  "gm",
+);
+// Characters that cannot appear in a file name on Windows, where Electron
+// derives the app's data folder from the name, or that break the JSON and
+// TypeScript the name is written into.
+const unsupportedNameCharacters = /["*/:<>?\\|\p{Cc}]/u;
+
 const renamedFiles = new Map([
   ["_gitignore", ".gitignore"],
   ["_npmrc", ".npmrc"],
@@ -22,6 +47,8 @@ const renamedFiles = new Map([
 const skippedFiles = new Set([
   "node_modules",
   ".next",
+  ".vite",
+  "out",
   "coverage",
   ".env",
   ".DS_Store",
@@ -38,7 +65,7 @@ const starterFiles = new Set([
   "README.md",
 ]);
 
-const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description <text>] [--db-port <port>]
+const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description <text>] [--db-port <port>] [--desktop | --no-desktop]
 
   name           Display name of the new project. The folder and package names
                  are derived from it: "SunnyRadish" becomes sunnyradish.
@@ -47,6 +74,8 @@ const usage = `Usage: npx github:benlambert43/b7-stack [name | .] [--description
   --description  One sentence for the README, package.json, and the home page.
   --db-port      Host port for the PostgreSQL container (default 5432). Give
                  each project its own to run their databases side by side.
+  --desktop      Add an Electron desktop app that shares its components with
+                 the web app. --no-desktop leaves it out without asking.
 
 Whatever is not given is asked for.`;
 
@@ -88,13 +117,31 @@ async function ask(question: string, defaultValue = "") {
   }
 }
 
+async function confirm(question: string) {
+  if (!process.stdin.isTTY) {
+    return false;
+  }
+  const prompt = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  try {
+    const answer = await prompt.question(`${question} (y/N): `);
+    return /^y(es)?$/i.test(answer.trim());
+  } finally {
+    prompt.close();
+  }
+}
+
 function parseArguments() {
   try {
     return parseArgs({
       allowPositionals: true,
+      allowNegative: true,
       options: {
         description: { type: "string", short: "d" },
         "db-port": { type: "string", default: "5432" },
+        desktop: { type: "boolean" },
         help: { type: "boolean", short: "h" },
       },
     });
@@ -129,12 +176,19 @@ const inPlace = positionals[0] === ".";
 const name = inPlace
   ? await ask("Project name", path.basename(process.cwd()))
   : (positionals[0] ?? (await ask("Project name")));
+if (unsupportedNameCharacters.test(name)) {
+  fail(
+    `"${name}" contains a character that cannot be used in the project name: " * / : < > ? \\ |`,
+  );
+}
 const slug = slugify(name);
 if (!slug) {
   fail(`"${name}" has no letters or digits to name the packages after.`);
 }
 const description =
   (values.description ?? "").trim() || (await ask("Description"));
+const desktop =
+  values.desktop ?? (await confirm("Add an Electron desktop app?"));
 const targetDir = inPlace ? process.cwd() : path.resolve(slug);
 
 if (fs.existsSync(targetDir)) {
@@ -163,10 +217,56 @@ const placeholderPattern = new RegExp(
 const fill = (text: string) =>
   text.replace(placeholderPattern, (match) => replacements.get(match) ?? match);
 
+function selectDesktop(source: string, text: string) {
+  if (desktop) {
+    return text.replace(desktopMarker, "");
+  }
+  if (source === path.join(templateDir, "package.json")) {
+    const manifest = JSON.parse(text) as {
+      workspaces: string[];
+      scripts: Record<string, string>;
+    };
+    manifest.workspaces = manifest.workspaces.filter(
+      (workspace) => workspace !== desktopWorkspace,
+    );
+    manifest.scripts = Object.fromEntries(
+      Object.entries(manifest.scripts).filter(
+        ([, command]) => !command.includes(desktopWorkspace),
+      ),
+    );
+    return `${JSON.stringify(manifest, null, 2)}\n`;
+  }
+  if (path.basename(source) === "package-lock.json") {
+    return text;
+  }
+  const relative = path.relative(templateDir, source);
+  const markers = [...text.matchAll(/desktop:(start|end)/g)].map(
+    ([, kind]) => kind,
+  );
+  if (markers.some((kind, index) => kind !== (index % 2 ? "end" : "start"))) {
+    fail(`${relative} has unbalanced desktop:start and desktop:end markers.`);
+  }
+  const stripped = text
+    .replace(desktopBlock, "")
+    .replace(removableDesktopLine, "");
+  const leftover = stripped
+    .split("\n")
+    .findIndex((line) => line.includes(desktopWorkspace));
+  if (leftover !== -1) {
+    fail(
+      `${relative}: "${stripped.split("\n")[leftover]?.trim() ?? ""}" names ${desktopWorkspace} but is not a list entry, an ignore path, or a Markdown list item or table row. Put it between desktop:start and desktop:end markers.`,
+    );
+  }
+  return stripped;
+}
+
 function copyTemplate(sourceDir: string, destinationDir: string) {
   fs.mkdirSync(destinationDir, { recursive: true });
   for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
-    if (skippedFiles.has(entry.name)) {
+    if (
+      skippedFiles.has(entry.name) ||
+      (!desktop && entry.name === desktopWorkspace)
+    ) {
       continue;
     }
     const source = path.join(sourceDir, entry.name);
@@ -181,7 +281,9 @@ function copyTemplate(sourceDir: string, destinationDir: string) {
     const content = fs.readFileSync(source);
     fs.writeFileSync(
       destination,
-      content.includes(0) ? content : fill(content.toString("utf8")),
+      content.includes(0)
+        ? content
+        : fill(selectDesktop(source, content.toString("utf8"))),
       { mode: fs.statSync(source).mode },
     );
   }
@@ -239,10 +341,14 @@ if (!fs.existsSync(path.join(targetDir, ".git"))) {
 run("npm", ["install"]);
 run("npm", ["run", "format", "--silent", "--", "--log-level", "warn"]);
 
+const desktopStep = desktop
+  ? "\n  npm run dev:desktop   desktop app, which calls the API"
+  : "";
+
 console.log(`
 ${styleText("green", "✔")} ${styleText("bold", name)} is ready. Next:
 ${inPlace ? "" : `\n  cd ${slug}`}
   npm run db:start      PostgreSQL in Docker on port ${dbPort}, migrations applied
   npm run dev           web app on http://localhost:3000
-  npm run dev:server    API on http://localhost:4000
+  npm run dev:server    API on http://localhost:4000${desktopStep}
 `);

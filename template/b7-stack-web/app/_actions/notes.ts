@@ -1,25 +1,16 @@
 "use server";
 
 import { noteIdSchema, noteInputSchema } from "@b7-stack/shared";
+import { type NoteFormState, readNoteBody } from "@b7-stack/ui";
 import { refresh } from "next/cache";
 
 import * as notesApi from "@/app/_lib/notesApi.ts";
-
-export interface NoteFormState {
-  body: string;
-  error: string | null;
-}
-
-function readBody(formData: FormData): string {
-  const body = formData.get("body");
-  return typeof body === "string" ? body : "";
-}
 
 export async function createNote(
   _previousState: NoteFormState,
   formData: FormData,
 ): Promise<NoteFormState> {
-  const body = readBody(formData);
+  const body = readNoteBody(formData);
   const input = noteInputSchema.safeParse({ body });
   if (!input.success) {
     return { body, error: input.error.issues[0]?.message ?? "Invalid note." };
@@ -39,7 +30,7 @@ export async function updateNote(
   _previousState: NoteFormState,
   formData: FormData,
 ): Promise<NoteFormState> {
-  const body = readBody(formData);
+  const body = readNoteBody(formData);
   const noteId = noteIdSchema.safeParse(id);
   const input = noteInputSchema.safeParse({ body });
   if (!noteId.success || !input.success) {

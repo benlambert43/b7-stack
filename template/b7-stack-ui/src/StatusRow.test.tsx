@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { StatusRow } from "@/app/_components/StatusRow.tsx";
+import { StatusRow } from "./StatusRow.tsx";
 
 describe("StatusRow", () => {
   it("shows the label and state", () => {
