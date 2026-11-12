@@ -1,11 +1,18 @@
 import { AppShell } from "@b7-stack/ui";
+import type { Metadata } from "next";
 
 import { Notes } from "@/app/_components/Notes.tsx";
 import { StatusChecks } from "@/app/_components/StatusChecks.tsx";
+import { site, siteOpenGraph } from "@/app/_lib/site.ts";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { ...siteOpenGraph, url: "/" },
+};
 
 export default function Home() {
   return (
-    <AppShell title="B7 Stack" description="A new B7 Stack project.">
+    <AppShell title={site.name} description={site.description}>
       <Notes />
       <StatusChecks />
     </AppShell>

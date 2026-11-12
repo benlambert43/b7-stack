@@ -31,8 +31,10 @@ export function NoteItem({
   const editField = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (editing) {
-      editField.current?.focus();
+    const field = editField.current;
+    if (editing && field) {
+      field.focus();
+      field.setSelectionRange(field.value.length, field.value.length);
     }
   }, [editing]);
 
