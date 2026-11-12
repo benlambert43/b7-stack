@@ -21,10 +21,6 @@ export default defineConfig([
     },
     rules: {
       "@typescript-eslint/no-deprecated": "error",
-      "@typescript-eslint/restrict-template-expressions": [
-        "error",
-        { allowNumber: true },
-      ],
       "@typescript-eslint/no-unused-vars": [
         "error",
         {

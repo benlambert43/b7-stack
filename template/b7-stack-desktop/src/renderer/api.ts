@@ -26,7 +26,7 @@ async function request(
     signal: AbortSignal.timeout(5000),
   });
   if (!response.ok) {
-    throw new Error(`${method} ${path} failed with ${response.status}`);
+    throw new Error(`${method} ${path} failed with ${String(response.status)}`);
   }
   return response;
 }

@@ -9,7 +9,6 @@ export default defineConfig({
       "b7-stack-web",
       "b7-stack-desktop",
     ],
-    passWithNoTests: true,
     coverage: {
       reporter: ["text", "html"],
       include: [

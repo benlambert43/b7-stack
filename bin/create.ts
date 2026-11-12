@@ -152,7 +152,7 @@ if (values.help) {
   process.exit(0);
 }
 if (positionals.length > 1) {
-  fail(`Expected one name, got ${positionals.length}.\n\n${usage}`);
+  fail(`Expected one name, got ${String(positionals.length)}.\n\n${usage}`);
 }
 
 const nodeMajor = Number.parseInt(process.versions.node, 10);
@@ -330,7 +330,7 @@ console.log(styleText("bold", `\n▶ Creating ${name} in ${targetDir}`));
 copyTemplate(templateDir, targetDir);
 const envCount = writeEnvFiles(targetDir);
 console.log(
-  `  copied the template and wrote ${envCount} .env files with local defaults`,
+  `  copied the template and wrote ${String(envCount)} .env files with local defaults`,
 );
 
 if (!fs.existsSync(path.join(targetDir, ".git"))) {

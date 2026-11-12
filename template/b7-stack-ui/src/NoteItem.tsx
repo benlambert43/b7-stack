@@ -7,7 +7,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import type {
   DeleteNoteAction,
@@ -28,6 +28,13 @@ export function NoteItem({
   deleteAction: DeleteNoteAction;
 }) {
   const [editing, setEditing] = useState(false);
+  const editField = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (editing) {
+      editField.current?.focus();
+    }
+  }, [editing]);
 
   const [editState, submitEdit, editPending] = useActionState(
     async (previousState: NoteFormState, formData: FormData) => {
@@ -55,12 +62,11 @@ export function NoteItem({
             Edit note
           </label>
           <textarea
+            ref={editField}
             id={`note-${note.id}`}
             name="body"
             rows={2}
             required
-            // eslint-disable-next-line jsx-a11y/no-autofocus -- Takes over the focus of the Edit button it replaces.
-            autoFocus
             maxLength={NOTE_BODY_MAX_LENGTH}
             defaultValue={editState.error ? editState.body : note.body}
             className="flex-1 resize-y rounded-lg border border-zinc-300

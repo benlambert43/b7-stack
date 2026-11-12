@@ -20,7 +20,7 @@ export const noteInputSchema = z.object({
     .min(1, "Write something first.")
     .max(
       NOTE_BODY_MAX_LENGTH,
-      `Keep it under ${NOTE_BODY_MAX_LENGTH} characters.`,
+      `Keep it under ${String(NOTE_BODY_MAX_LENGTH)} characters.`,
     ),
 });
 

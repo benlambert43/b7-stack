@@ -12,12 +12,6 @@ import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-const tailwindRules = {
-  "better-tailwindcss/enforce-consistent-class-order": "off",
-  "better-tailwindcss/enforce-consistent-line-wrapping": "off",
-  "better-tailwindcss/enforce-consistent-variant-order": "warn",
-} as const;
-
 const nodeGlobals = Object.keys(globals.node).filter(
   (name) => !(name in globals.browser),
 );
@@ -53,10 +47,6 @@ export default defineConfig([
     },
     rules: {
       "@typescript-eslint/no-deprecated": "error",
-      "@typescript-eslint/restrict-template-expressions": [
-        "error",
-        { allowNumber: true },
-      ],
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
@@ -98,7 +88,6 @@ export default defineConfig([
     ],
     settings: { react: { version: reactVersion } },
     rules: {
-      "react/prop-types": "off",
       "no-restricted-globals": [
         "error",
         ...nodeGlobals.map((name) => ({
@@ -136,7 +125,7 @@ export default defineConfig([
   {
     files: ["b7-stack-web/**/*.{ts,tsx}", "b7-stack-ui/**/*.{ts,tsx}"],
     extends: [betterTailwindcss.configs.recommended],
-    rules: tailwindRules,
+    rules: { "better-tailwindcss/enforce-consistent-line-wrapping": "off" },
     settings: {
       "better-tailwindcss": { entryPoint: "b7-stack-web/app/globals.css" },
     },
@@ -147,7 +136,7 @@ export default defineConfig([
     files: ["b7-stack-desktop/src/renderer/**/*.{ts,tsx}"],
     extends: [betterTailwindcss.configs.recommended],
     rules: {
-      ...tailwindRules,
+      "better-tailwindcss/enforce-consistent-line-wrapping": "off",
       "@typescript-eslint/no-restricted-imports": [
         "error",
         {
