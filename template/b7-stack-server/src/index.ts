@@ -10,7 +10,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: [serverEnv.BASE_FRONTEND_URL, ...serverEnv.EXTRA_ALLOWED_ORIGINS],
+    origin: [
+      serverEnv.BASE_FRONTEND_URL,
+      // desktop:start
+      ...serverEnv.EXTRA_ALLOWED_ORIGINS,
+      // desktop:end
+    ],
   }),
 );
 app.use(express.json());

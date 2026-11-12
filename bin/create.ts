@@ -7,6 +7,7 @@ import readline from "node:readline";
 import { styleText } from "node:util";
 
 const templateDir = path.join(import.meta.dirname, "..", "template");
+const webOnlyDir = path.join(import.meta.dirname, "..", "template-web-only");
 
 const placeholders = {
   description: "A new B7 Stack project.",
@@ -14,7 +15,18 @@ const placeholders = {
   slug: "b7-stack",
 };
 
-const desktopWorkspace = `${placeholders.slug}-desktop`;
+const desktopWorkspaces = [
+  `${placeholders.slug}-desktop`,
+  `${placeholders.slug}-ui`,
+];
+const desktopNames = [...desktopWorkspaces, `@${placeholders.slug}/ui`];
+const desktopOnlyPaths = new Set([
+  ...desktopWorkspaces,
+  path.join(".vscode", "launch.json"),
+  path.join(`${placeholders.slug}-shared`, "src", "apiClient.ts"),
+  path.join(`${placeholders.slug}-shared`, "src", "noteActions.ts"),
+]);
+const desktopWorkspacePattern = `(?:${desktopWorkspaces.join("|")})`;
 const lineEnd = String.raw`(?:\r?\n|(?![\s\S]))`;
 const desktopBlock = new RegExp(
   String.raw`^.*desktop:start.*\r?\n[\s\S]*?^.*desktop:end.*` + lineEnd,
@@ -25,9 +37,13 @@ const desktopMarker = new RegExp(
   "gm",
 );
 const removableDesktopLine = new RegExp(
-  String.raw`^(?:[ \t]*["'][^"'\n]*${desktopWorkspace}[^"'\n]*["'],?[ \t]*|[^\s]*${desktopWorkspace}[^\s]*|[ \t]*(?:[-*|]|\d+\.)[ \t].*${desktopWorkspace}.*)` +
+  String.raw`^(?:[ \t]*["'][^"'\n]*${desktopWorkspacePattern}[^"'\n]*["'],?[ \t]*|[^\s]*${desktopWorkspacePattern}[^\s]*|[ \t]*(?:[-*|]|\d+\.)[ \t].*${desktopWorkspacePattern}.*)` +
     lineEnd,
   "gm",
+);
+const removableDesktopEntry = new RegExp(
+  String.raw`,[ \t]*(["'])[^"'\n]*${desktopWorkspacePattern}[^"'\n]*\1`,
+  "g",
 );
 const unsupportedCharacters = /["\\\p{Cc}]/u;
 const unsupportedDesktopNameCharacters = /[*/:<>?|]/;
@@ -176,29 +192,63 @@ const placeholderPattern = new RegExp(
 const fill = (text: string) =>
   text.replace(placeholderPattern, (match) => replacements.get(match) ?? match);
 
-function selectDesktop(source: string, text: string) {
-  if (desktop) {
-    return text.replace(desktopMarker, "");
+type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
+
+function isJsonObject(value: Json): value is Record<string, Json> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function mergePatch(target: Json, patch: Json): Json {
+  if (!isJsonObject(patch)) {
+    return patch;
   }
-  if (source === path.join(templateDir, "package.json")) {
+  const merged = new Map(Object.entries(isJsonObject(target) ? target : {}));
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === null) {
+      merged.delete(key);
+    } else {
+      merged.set(key, mergePatch(merged.get(key) ?? null, value));
+    }
+  }
+  return Object.fromEntries(merged);
+}
+
+function applyWebOnly(relative: string, text: string) {
+  const variant = path.join(webOnlyDir, relative);
+  if (!fs.existsSync(variant)) {
+    return text;
+  }
+  const variantText = fs.readFileSync(variant, "utf8");
+  if (path.extname(relative) !== ".json") {
+    return variantText;
+  }
+  const merged = mergePatch(
+    JSON.parse(text) as Json,
+    JSON.parse(variantText) as Json,
+  );
+  return `${JSON.stringify(merged, null, 2)}\n`;
+}
+
+function removeDesktop(relative: string, text: string) {
+  if (relative === "package.json") {
     const manifest = JSON.parse(text) as {
       workspaces: string[];
       scripts: Record<string, string>;
     };
     manifest.workspaces = manifest.workspaces.filter(
-      (workspace) => workspace !== desktopWorkspace,
+      (workspace) => !desktopWorkspaces.includes(workspace),
     );
     manifest.scripts = Object.fromEntries(
       Object.entries(manifest.scripts).filter(
-        ([, command]) => !command.includes(desktopWorkspace),
+        ([, command]) =>
+          !desktopWorkspaces.some((workspace) => command.includes(workspace)),
       ),
     );
     return `${JSON.stringify(manifest, null, 2)}\n`;
   }
-  if (path.basename(source) === "package-lock.json") {
+  if (path.basename(relative) === "package-lock.json") {
     return text;
   }
-  const relative = path.relative(templateDir, source);
   const markers = [...text.matchAll(/desktop:(start|end)/g)].map(
     ([, kind]) => kind,
   );
@@ -207,44 +257,63 @@ function selectDesktop(source: string, text: string) {
   }
   const stripped = text
     .replace(desktopBlock, "")
-    .replace(removableDesktopLine, "");
+    .replace(removableDesktopLine, "")
+    .replace(removableDesktopEntry, "");
   const leftover = stripped
     .split("\n")
-    .findIndex((line) => line.includes(desktopWorkspace));
-  if (leftover !== -1) {
+    .find((line) => desktopNames.some((name) => line.includes(name)));
+  if (leftover !== undefined) {
     fail(
-      `${relative}: "${stripped.split("\n")[leftover]?.trim() ?? ""}" names ${desktopWorkspace} but is not a list entry, an ignore path, or a Markdown list item or table row. Put it between desktop:start and desktop:end markers.`,
+      `${relative}: "${leftover.trim()}" names a workspace that only a project with the desktop app has, but is not a list entry, an ignore path, or a Markdown list item or table row. Put it between desktop:start and desktop:end markers, or give the file a variant in template-web-only.`,
     );
   }
   return stripped;
 }
 
-function copyTemplate(sourceDir: string, destinationDir: string) {
+function copyTemplate(
+  sourceDir: string,
+  destinationDir: string,
+  rootDir = sourceDir,
+) {
   fs.mkdirSync(destinationDir, { recursive: true });
   for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    const source = path.join(sourceDir, entry.name);
+    const relative = path.relative(rootDir, source);
     if (
       skippedFiles.has(entry.name) ||
-      (!desktop && entry.name === desktopWorkspace)
+      (!desktop && desktopOnlyPaths.has(relative))
     ) {
       continue;
     }
-    const source = path.join(sourceDir, entry.name);
     const destination = path.join(
       destinationDir,
       renamedFiles.get(entry.name) ?? fill(entry.name),
     );
     if (entry.isDirectory()) {
-      copyTemplate(source, destination);
+      copyTemplate(source, destination, rootDir);
+      continue;
+    }
+    const fromTemplate = rootDir === templateDir;
+    if (!fromTemplate && fs.existsSync(path.join(templateDir, relative))) {
       continue;
     }
     const content = fs.readFileSync(source);
-    fs.writeFileSync(
-      destination,
-      content.includes(0)
-        ? content
-        : fill(selectDesktop(source, content.toString("utf8"))),
-      { mode: fs.statSync(source).mode },
-    );
+    if (content.includes(0)) {
+      fs.writeFileSync(destination, content, {
+        mode: fs.statSync(source).mode,
+      });
+      continue;
+    }
+    const text = content.toString("utf8");
+    const selected = desktop
+      ? text.replace(desktopMarker, "")
+      : removeDesktop(
+          relative,
+          fromTemplate ? applyWebOnly(relative, text) : text,
+        );
+    fs.writeFileSync(destination, fill(selected), {
+      mode: fs.statSync(source).mode,
+    });
   }
 }
 
@@ -289,6 +358,9 @@ function run(command: string, commandArgs: string[]) {
 
 console.log(styleText("bold", `\n▶ Creating ${name} in ${targetDir}`));
 copyTemplate(templateDir, targetDir);
+if (!desktop) {
+  copyTemplate(webOnlyDir, targetDir);
+}
 const envCount = writeEnvFiles(targetDir);
 console.log(
   `  copied the template and wrote ${String(envCount)} .env files with local defaults`,

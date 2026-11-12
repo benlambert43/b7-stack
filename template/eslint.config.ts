@@ -1,4 +1,6 @@
+// desktop:start
 import { builtinModules, createRequire } from "node:module";
+// desktop:end
 import path from "node:path";
 
 import js from "@eslint/js";
@@ -6,12 +8,15 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import betterTailwindcss from "eslint-plugin-better-tailwindcss";
+// desktop:start
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
+// desktop:end
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+// desktop:start
 const nodeGlobals = Object.keys(globals.node).filter(
   (name) => !(name in globals.browser),
 );
@@ -25,6 +30,7 @@ const nodeModules = ["node:*", ...builtinModules];
 const { version: reactVersion } = createRequire(import.meta.url)(
   "react/package.json",
 ) as { version: string };
+// desktop:end
 
 export default defineConfig([
   globalIgnores(["**/.next/", "**/coverage/", "**/next-env.d.ts"]),
@@ -79,6 +85,7 @@ export default defineConfig([
       ],
     },
   },
+  // desktop:start
   {
     files: ["b7-stack-shared/src/**/*.ts"],
     rules: {
@@ -123,14 +130,7 @@ export default defineConfig([
         {
           patterns: [
             {
-              group: [
-                "next",
-                "next/*",
-                ...nodeModules,
-                // desktop:start
-                "electron",
-                // desktop:end
-              ],
+              group: ["next", "next/*", ...nodeModules, "electron"],
               message:
                 "Shared components render wherever an app puts them. Take data and actions as props instead.",
             },
@@ -139,6 +139,7 @@ export default defineConfig([
       ],
     },
   },
+  // desktop:end
   {
     files: ["b7-stack-web/**/*.{ts,tsx}", "b7-stack-ui/**/*.{ts,tsx}"],
     extends: [betterTailwindcss.configs.recommended],

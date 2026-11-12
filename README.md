@@ -2,17 +2,16 @@
 
 A one-command starting point for new projects. Every project gets the same stack, so it only asks for a name, a description, a database port, and whether to add a desktop app.
 
-| Part               | What you get                                                                                                              |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| Web                | Next.js (App Router, Cache Components, React Compiler), Tailwind CSS, Testing Library                                     |
-| API                | Express 5 on Node.js 26, running TypeScript directly with no build step                                                   |
-| Data               | PostgreSQL in Docker, Drizzle ORM with SQL migrations                                                                     |
-| Shared             | Zod schemas, types, and the API client, used by the API and every app                                                     |
-| UI                 | React components and the Tailwind theme, in a package the apps share                                                      |
-| Desktop (optional) | Electron with Electron Forge and Vite, built from the same components as the web app and calling the API directly         |
-| Tooling            | npm workspaces, TypeScript 7, ESLint, Prettier, Vitest, Husky with lint-staged, ShellCheck, Dependabot, GitHub Actions CI |
+| Part               | What you get                                                                                                                                                                                                                                  |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web                | Next.js (App Router, Cache Components, React Compiler), Tailwind CSS, Testing Library                                                                                                                                                         |
+| API                | Express 5 on Node.js 26, running TypeScript directly with no build step                                                                                                                                                                       |
+| Data               | PostgreSQL in Docker, Drizzle ORM with SQL migrations                                                                                                                                                                                         |
+| Shared             | Zod schemas and types, used by the API and the web app                                                                                                                                                                                        |
+| Desktop (optional) | Electron with Electron Forge and Vite, calling the API directly. Adding it also adds a UI package, which holds the React components and the Tailwind theme for both apps, and moves the API client and the form logic into the shared package |
+| Tooling            | npm workspaces, TypeScript 7, ESLint, Prettier, Vitest, Husky with lint-staged, ShellCheck, Dependabot, GitHub Actions CI                                                                                                                     |
 
-A generated project ships a notes CRUD as a worked example of the whole path, from PostgreSQL through Drizzle, Express, Zod, and Next.js server actions to React components that every app shares. Its own README lists every script.
+A generated project ships a notes CRUD as a worked example of the whole path, from PostgreSQL through Drizzle, Express, Zod, and Next.js server actions to React components. Its own README lists every script.
 
 ## Quick start
 
@@ -38,12 +37,12 @@ npm run dev:desktop   # desktop app, if you added one
 
 The command takes no arguments. Everything is asked for, in this order:
 
-| Question                                          | Default | What the answer sets                                                                                                              |
-| ------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `Project name, or . to use the current directory` | none    | The display name of the project. The folder and package names are derived from it                                                 |
-| `Description`                                     | none    | One sentence for the README, `package.json`, and the home page                                                                    |
-| `Database port`                                   | `5432`  | The host port for the PostgreSQL container, from 1 to 65535. Give each project its own to run their databases side by side        |
-| `Add an Electron desktop app?`                    | `yes`   | `yes` or `y` adds `sunnyradish-desktop`, an Electron app that shows the same notes page as the web app; `no` or `n` leaves it out |
+| Question                                          | Default | What the answer sets                                                                                                                                                                    |
+| ------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Project name, or . to use the current directory` | none    | The display name of the project. The folder and package names are derived from it                                                                                                       |
+| `Description`                                     | none    | One sentence for the README, `package.json`, and the home page                                                                                                                          |
+| `Database port`                                   | `5432`  | The host port for the PostgreSQL container, from 1 to 65535. Give each project its own to run their databases side by side                                                              |
+| `Add an Electron desktop app?`                    | `yes`   | `yes` or `y` adds `sunnyradish-desktop`, an Electron app that shows the same notes page as the web app, and `sunnyradish-ui`, the components the two share; `no` or `n` leaves both out |
 
 A default is shown in parentheses after the question and is used when the answer is left blank. A question without a default is asked again until it is answered.
 
@@ -85,7 +84,7 @@ printf '%s\n' "SunnyRadish" "Notes for gardeners." "" "no" | npx --yes --allow-g
 
 ### Rules
 
-- **Names.** The name is lowercased and each run of characters other than letters and digits becomes a hyphen. `SunnyRadish` gives `sunnyradish`, `@sunnyradish/shared`, `@sunnyradish/ui`, `sunnyradish-server`, and `sunnyradish-web`; `Demo App` gives `demo-app`.
+- **Names.** The name is lowercased and each run of characters other than letters and digits becomes a hyphen. `SunnyRadish` gives `sunnyradish`, `@sunnyradish/shared`, `sunnyradish-server`, and `sunnyradish-web`, and with the desktop app `sunnyradish-desktop` and `@sunnyradish/ui` as well; `Demo App` gives `demo-app`.
 - **Characters.** The name and the description may not contain `"`, `\`, or control characters, which would break the files they are written into. With the desktop app the name may not contain `* / : < > ? |` either, which Windows does not allow in file names.
 - **Target folder.** It must be new, or hold nothing but what GitHub adds to a new repository: `.git`, `.gitignore`, `.gitattributes`, `LICENSE`, and `README.md`. The template's `.gitignore`, `.gitattributes`, and `README.md` replace the ones already there.
 - **Invalid answers.** An answer that breaks one of these rules, a port out of range, or anything but `yes`, `y`, `no`, or `n` for the desktop app stops the command before any file is written. So does input that ends before every question has an answer.
@@ -101,12 +100,14 @@ If a step fails, the files stay in the folder and the error says where they are.
 
 ## Working on this repository
 
-| Path                        | What it holds                                                                      |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| `bin/create.ts`             | The CLI. `npm install` compiles it into `dist/create.js`, which is what npx runs   |
-| `template/`                 | A complete, working project named "B7 Stack", which the CLI copies                 |
-| `template/b7-stack-desktop` | The desktop app, always present in the template and left out when declined         |
-| `.github/workflows/ci.yml`  | Scaffolds a project with and without the desktop app and runs each one's preflight |
+| Path                        | What it holds                                                                                                           |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `bin/create.ts`             | The CLI. `npm install` compiles it into `dist/create.js`, which is what npx runs                                        |
+| `template/`                 | A complete, working project named "B7 Stack", which the CLI copies                                                      |
+| `template/b7-stack-desktop` | The desktop app, always present in the template and left out when declined                                              |
+| `template/b7-stack-ui`      | The components the web and desktop apps share, left out with the desktop app                                            |
+| `template-web-only/`        | The files that differ in a project without the desktop app, which keeps its components and API calls inside the web app |
+| `.github/workflows/ci.yml`  | Scaffolds a project with and without the desktop app and runs each one's preflight                                      |
 
 ### Setup
 
@@ -128,7 +129,7 @@ The repository's `.vscode` settings mirror the template's and point VS Code at t
 | `npm run lint:shell`   | Runs ShellCheck on the pre-commit hook                                                          |
 | `npm run lint:editor`  | Fails on `.vscode/settings.json` keys that the installed VS Code marks as deprecated            |
 
-These cover the root only; ESLint and Prettier ignore `template/` here. Run the template's own checks from `template/`. On commit, Husky runs lint-staged, and staged files inside `template/` go through the template's lint-staged config.
+These cover the root only; ESLint and Prettier ignore `template/` and `template-web-only/` here. Run the template's own checks from `template/`. On commit, Husky runs lint-staged, and staged files inside `template/` go through the template's lint-staged config.
 
 ### Trying the CLI
 
@@ -168,15 +169,27 @@ The CLI copies `template/` file for file and replaces three strings everywhere, 
 
 ### The desktop app in the template
 
-When the desktop app is declined, the CLI leaves `template/b7-stack-desktop` out and removes what refers to it elsewhere:
+The template is the project with the desktop app. In it the web and desktop apps share their components through `b7-stack-ui`, and the API client and the form logic through `b7-stack-shared`. A project without the desktop app has one app, so it keeps all of that inside `b7-stack-web`, as it would if the desktop app did not exist.
+
+When the desktop app is declined, the CLI leaves out `template/b7-stack-desktop`, `template/b7-stack-ui`, `.vscode/launch.json`, and `apiClient.ts` and `noteActions.ts` in `b7-stack-shared/src`. The `desktopOnlyPaths` list in `bin/create.ts` names them. It then changes the rest in two ways.
+
+It takes each file in `template-web-only/` in place of the template's file at the same path:
+
+- A file that is not JSON replaces the template's file, or is added where the template has none.
+- A JSON file is merged into the template's file instead, so that the versions in a `package.json` stay in one place. A key set to `null` is removed, an object is merged key by key, and any other value replaces the one in the template.
+
+And it removes what refers to the two workspaces in the files that remain:
 
 - everything between a line containing `desktop:start` and the next line containing `desktop:end`;
-- the workspace and the scripts for it in the root `package.json`;
-- each line that names `b7-stack-desktop` and is a whole entry on its own: a quoted string in a list with one entry per line, a path in an ignore file, or a Markdown list item or table row.
+- the workspaces and the scripts for them in the root `package.json`;
+- each line that names `b7-stack-desktop` or `b7-stack-ui` and is a whole entry on its own: a quoted string in a list with one entry per line, a path in an ignore file, or a Markdown list item or table row;
+- a quoted string that names one of them later in a list written on one line, together with the comma before it.
 
-When the desktop app is added, it removes only the marker lines. So whatever the desktop app needs outside its own folder must be one of those lines, as the ignore files, the Vitest project list, and the README's tables are, or sit between markers, as the ESLint block and the CI job do.
+When the desktop app is added, the CLI ignores `template-web-only/` and removes only the marker lines. So whatever the desktop app needs outside those two folders must be one of those entries, as the ignore files, the Vitest project list, and the cache key in the CI workflow are, or sit between markers, as the ESLint blocks and the CI job do. Where the project without the desktop app needs different content rather than less of it, give the file a variant in `template-web-only/`.
 
-Any other line that names the folder, and any unbalanced marker, makes the CLI stop with an error naming the file. CI also fails if the project without the desktop app contains the word "desktop" at all.
+Any other line that names one of the workspaces or `@b7-stack/ui`, and any unbalanced marker, makes the CLI stop with an error naming the file. CI also fails if the project without the desktop app contains the word "desktop" at all.
+
+A change to a template file that has a variant in `template-web-only/` belongs in the variant too. `README.md` is the largest of them. Prettier and ESLint do not run on `template-web-only/` in this repository, so scaffold a project without the desktop app and run its `npm run preflight` to check a change there, as CI does.
 
 `package-lock.json` is copied whole, and the `npm install` that follows prunes it. Electron's binary is not part of that install: the `electron` package downloads it the first time the desktop app is started or packaged.
 

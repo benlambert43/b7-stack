@@ -10,6 +10,7 @@
   "files": [
     "dist",
     "template",
+    "template-web-only",
     "!template/**/node_modules",
     "!template/**/.next",
     "!template/**/.vite",
