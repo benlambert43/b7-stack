@@ -29,7 +29,7 @@ const removableDesktopLine = new RegExp(
     lineEnd,
   "gm",
 );
-const unsupportedNameCharacters = /["\\\p{Cc}]/u;
+const unsupportedCharacters = /["\\\p{Cc}]/u;
 const unsupportedDesktopNameCharacters = /[*/:<>?|]/;
 
 const renamedFiles = new Map([
@@ -169,7 +169,7 @@ const inPlace = positionals[0] === ".";
 const name = inPlace
   ? await ask("Project name", path.basename(process.cwd()))
   : (positionals[0] ?? (await ask("Project name")));
-if (unsupportedNameCharacters.test(name)) {
+if (unsupportedCharacters.test(name)) {
   fail(
     `"${name}" contains a character that cannot be used in the project name: " \\ or a control character`,
   );
@@ -180,6 +180,11 @@ if (!slug) {
 }
 const description =
   (values.description ?? "").trim() || (await ask("Description"));
+if (unsupportedCharacters.test(description)) {
+  fail(
+    `The description contains a character that cannot be used in it: " \\ or a control character`,
+  );
+}
 const desktop =
   values.desktop ?? (await confirm("Add an Electron desktop app?"));
 if (desktop && unsupportedDesktopNameCharacters.test(name)) {

@@ -42,7 +42,7 @@ npm run dev:server   # API on http://localhost:4000
 
 - The folder and package names come from the name, lowercased and with each run of characters other than letters and digits replaced by a hyphen: `"SunnyRadish"` gives `sunnyradish`, `@sunnyradish/shared`, `@sunnyradish/ui`, `sunnyradish-server`, and `sunnyradish-web`.
 - Pass `.` instead of a name to scaffold into the current directory, such as a freshly cloned empty repository. The folder name is offered as the project name, and `git init` is skipped when `.git` already exists.
-- The name may not contain `"` or `\`, which would break the files the name is written into. With `--desktop` it may not contain `* / : < > ? |` either, which Windows does not allow in file names.
+- The name and the description may not contain `"` or `\`, which would break the files they are written into. With `--desktop` it may not contain `* / : < > ? |` either, which Windows does not allow in file names.
 - Pass `--description "..."` to skip the prompt, for example in scripts.
 - Pass `--db-port 5433` (or any free port) to publish the PostgreSQL container on a port other than 5432
 - Pass `--desktop` to add `sunnyradish-desktop`, an Electron app that shows the same notes page as the web app, built from the same components, and calls the API directly. `npm run dev:desktop` starts it, and the project's README explains how it is put together. Pass `--no-desktop` to leave it out without being asked

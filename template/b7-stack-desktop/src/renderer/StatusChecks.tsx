@@ -2,7 +2,7 @@ import type { HealthResponse } from "@b7-stack/shared";
 import { StatusRow, StatusSection } from "@b7-stack/ui";
 import { Suspense, use, useState } from "react";
 
-import { getHealth } from "@/renderer/api.ts";
+import { api } from "@/renderer/api.ts";
 
 function loadAppVersion(): Promise<string | null> {
   if (!("bridge" in window)) {
@@ -43,7 +43,7 @@ function ApiChecks({ health }: { health: Promise<HealthResponse | null> }) {
 
 export function StatusChecks() {
   const [version] = useState(loadAppVersion);
-  const [health] = useState(getHealth);
+  const [health] = useState(api.getHealth);
 
   return (
     <StatusSection>

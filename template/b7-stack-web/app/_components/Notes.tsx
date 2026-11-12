@@ -3,11 +3,11 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { createNote, deleteNote, updateNote } from "@/app/_actions/notes.ts";
-import { getNotes } from "@/app/_lib/notesApi.ts";
+import { api } from "@/app/_lib/api.ts";
 
 async function LoadedNotes() {
   await connection();
-  const notes = await getNotes().catch((error: unknown) => {
+  const notes = await api.getNotes().catch((error: unknown) => {
     console.error(error);
     return null;
   });

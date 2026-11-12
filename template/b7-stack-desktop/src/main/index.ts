@@ -16,6 +16,37 @@ import { contentSecurityPolicy } from "@/contentSecurityPolicy.ts";
 import { env } from "@/env.ts";
 import { handlers } from "@/main/handlers.ts";
 
+// Security model. The window is treated as untrusted: it shows data from the
+// API, so everything it can reach is decided here and nothing is left to the
+// page. Each rule below closes one way out of that; change them together.
+//
+// - Sandbox: app.enableSandbox() sandboxes every renderer, and context
+//   isolation stays on, so the page has no Node.js or Electron APIs. The
+//   preload script exposes only the named functions of Bridge, never
+//   ipcRenderer itself.
+// - IPC: every handler checks that the calling frame is the app's own page
+//   (isRenderer) before it runs, so an embedded or navigated-to page cannot
+//   call the main process.
+// - Origin: a packaged app is served from app://renderer, a privileged
+//   standard scheme, because file:// pages have no origin for the API's CORS
+//   list or the Content-Security-Policy to refer to. serveRendererFile only
+//   answers for that host and only with files inside the renderer folder; the
+//   startsWith check is what stops ../ paths from reading the rest of the disk.
+// - Content-Security-Policy: sent with every file by serveRendererFile, and by
+//   Vite's dev server in development. It limits the page to its own files and
+//   the API's origin, with no inline or evaluated script in a packaged app
+//   (src/contentSecurityPolicy.ts).
+// - Navigation: will-navigate and the window-open handler keep the window on
+//   the app's own page. Anything else is refused, and only https addresses are
+//   handed to the default browser, so a link cannot launch another program
+//   through a custom scheme or open a local file.
+// - Permissions: both the request and the check handler refuse everything not
+//   in grantedPermissions, so the page cannot get the camera, microphone,
+//   location or notifications by asking.
+// - Binary: the fuses in forge.config.ts stop a packaged app from being run as
+//   plain Node.js, taking NODE_OPTIONS or debugger flags, or loading code from
+//   outside app.asar.
+
 const devServerUrl = MAIN_WINDOW_VITE_DEV_SERVER_URL as string | undefined;
 const renderer = new URL(devServerUrl ?? "app://renderer");
 

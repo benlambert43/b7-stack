@@ -10,7 +10,7 @@
     "dev": "electron-forge start",
     "build": "electron-forge package",
     "make": "electron-forge make",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit --project src/renderer"
   },
   "dependencies": {
     "@b7-stack/shared": "*",

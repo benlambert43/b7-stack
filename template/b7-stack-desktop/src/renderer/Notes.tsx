@@ -4,15 +4,17 @@ import {
   NoteList,
   NoteListFallback,
   NotesSection,
+  submitNewNote,
+  submitNoteDelete,
+  submitNoteEdit,
   type UpdateNoteAction,
 } from "@b7-stack/ui";
 import { startTransition, Suspense, use, useState } from "react";
 
-import { getNotes } from "@/renderer/api.ts";
-import { createNote, deleteNote, updateNote } from "@/renderer/noteActions.ts";
+import { api } from "@/renderer/api.ts";
 
 function loadNotes(): Promise<Note[] | null> {
-  return getNotes().catch((error: unknown) => {
+  return api.getNotes().catch((error: unknown) => {
     console.error(error);
     return null;
   });
@@ -54,16 +56,16 @@ export function Notes() {
   return (
     <NotesSection
       createAction={(_previousState, formData) =>
-        reloadAfter(createNote(formData))
+        reloadAfter(submitNewNote(api, formData))
       }
     >
       <Suspense fallback={<NoteListFallback />}>
         <LoadedNotes
           notes={notes}
           updateAction={(id, _previousState, formData) =>
-            reloadAfter(updateNote(id, formData))
+            reloadAfter(submitNoteEdit(api, id, formData))
           }
-          deleteAction={(id) => reloadAfter(deleteNote(id))}
+          deleteAction={(id) => reloadAfter(submitNoteDelete(api, id))}
         />
       </Suspense>
     </NotesSection>

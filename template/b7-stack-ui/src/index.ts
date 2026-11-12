@@ -1,3 +1,4 @@
+export * from "./apiClient.ts";
 export * from "./AppShell.tsx";
 export * from "./NoteForm.tsx";
 export * from "./noteForm.ts";

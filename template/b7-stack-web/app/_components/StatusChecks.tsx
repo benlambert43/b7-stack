@@ -2,7 +2,7 @@ import { StatusRow, StatusSection } from "@b7-stack/ui";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
-import { getApiHealth } from "@/app/_lib/apiHealth.ts";
+import { api } from "@/app/_lib/api.ts";
 
 async function BffCheck() {
   await connection();
@@ -17,7 +17,7 @@ async function BffCheck() {
 
 async function ApiChecks() {
   await connection();
-  const health = await getApiHealth();
+  const health = await api.getHealth();
   return (
     <>
       <StatusRow label="API" state={health ? "ok" : "error"} />
