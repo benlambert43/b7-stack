@@ -145,7 +145,7 @@ npm run clean:dry-run -- --force   # lists what clean:force would remove
 
 ## API
 
-`b7-stack-server` serves JSON on `http://localhost:4000`. Every route but the health check reads or writes the `notes` table.
+`b7-stack-server` serves JSON on `http://localhost:4000`. Every route but the health check reads or writes the `notes` table. Errors are JSON as well, in the form `{"error": "..."}`: 404 for an unknown route, 400 for a body that is not valid JSON, and 500 for a failure the API did not expect, which it logs.
 
 | Route                      | What it does                                                                                                                |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -171,6 +171,7 @@ The notes page is a worked example of the whole path, from the database to the c
 | ------------------------------------------ | --------------------------------------------------------------------------- |
 | Table and migrations                       | `b7-stack-server/src/schema.ts` and `b7-stack-server/drizzle`               |
 | Routes                                     | `b7-stack-server/src/notes.ts`, mounted in `src/index.ts`                   |
+| Error responses                            | `b7-stack-server/src/errors.ts`                                             |
 | Server environment                         | `b7-stack-server/src/serverEnv.ts`, parsed with Zod when the API starts     |
 | Schemas and types                          | `b7-stack-shared/src/notes.ts` and `src/health.ts`                          |
 | API client                                 | `b7-stack-shared/src/apiClient.ts`                                          |
@@ -201,6 +202,7 @@ A component belongs in `b7-stack-ui` when more than one app shows it, or could. 
 | -------------------- | ----------------------------------------------------------------------------------------------- |
 | Table and migrations | `b7-stack-server/src/schema.ts` and `b7-stack-server/drizzle`                                   |
 | Routes               | `b7-stack-server/src/notes.ts`, mounted in `src/index.ts`                                       |
+| Error responses      | `b7-stack-server/src/errors.ts`                                                                 |
 | Server environment   | `b7-stack-server/src/serverEnv.ts`, parsed with Zod when the API starts                         |
 | Schemas and types    | `b7-stack-shared/src/notes.ts` and `src/health.ts`                                              |
 | API calls            | `b7-stack-web/app/_lib/notesApi.ts` and `app/_lib/apiHealth.ts`, which only the server runs     |

@@ -40,7 +40,7 @@ jobs:
       - name: Generate a project the way npx does
         env:
           PACKAGE: github:${{ github.repository }}#${{ github.event.pull_request.head.sha || github.sha }}
-        run: printf '%s\n' "Demo App" "A project generated in CI." "" "${{ matrix.desktop }}" | npx --yes "$PACKAGE"
+        run: printf '%s\n' "Demo App" "A project generated in CI." "" "${{ matrix.desktop }}" | npx --yes --allow-git=all "$PACKAGE"
       - name: Check that no placeholder survived
         run: "! grep -rIiE 'b7[-_ ]?stack' demo-app --exclude-dir=node_modules --exclude-dir=.git"
       - name: Check that no template marker survived

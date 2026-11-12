@@ -209,13 +209,54 @@ const placeholderPattern = new RegExp(
   [...replacements.keys()].map(escapeRegExp).join("|"),
   "g",
 );
-const fill = (text: string) =>
-  text.replace(placeholderPattern, (match) => replacements.get(match) ?? match);
+const fill = (text: string, escape = (value: string) => value) =>
+  text.replace(placeholderPattern, (match) =>
+    escape(replacements.get(match) ?? match),
+  );
+const escapeTableCell = (value: string) =>
+  value.replaceAll("|", String.raw`\|`);
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
 function isJsonObject(value: Json): value is Record<string, Json> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+const dependencyFields = [
+  "dependencies",
+  "devDependencies",
+  "optionalDependencies",
+  "peerDependencies",
+];
+
+function sortDependencies(text: string) {
+  const manifest = JSON.parse(text) as Record<string, Json>;
+  for (const field of dependencyFields) {
+    const dependencies = manifest[field];
+    if (dependencies !== undefined && isJsonObject(dependencies)) {
+      manifest[field] = Object.fromEntries(
+        Object.entries(dependencies).sort(([a], [b]) =>
+          a.localeCompare(b, "en"),
+        ),
+      );
+    }
+  }
+  return `${JSON.stringify(manifest, null, 2)}\n`;
+}
+
+function render(relative: string, text: string) {
+  if (path.basename(relative) === "package.json") {
+    return sortDependencies(fill(text));
+  }
+  if (path.extname(relative) === ".md") {
+    return text
+      .split("\n")
+      .map((line) =>
+        line.startsWith("|") ? fill(line, escapeTableCell) : fill(line),
+      )
+      .join("\n");
+  }
+  return fill(text);
 }
 
 function mergePatch(target: Json, patch: Json): Json {
@@ -344,7 +385,7 @@ function copyTemplate(
       relative,
       !desktop && fromTemplate ? applyWebOnly(relative, text) : text,
     );
-    fs.writeFileSync(destination, fill(selected), {
+    fs.writeFileSync(destination, render(relative, selected), {
       mode: fs.statSync(source).mode,
     });
   }
@@ -397,7 +438,7 @@ if (!desktop) {
     const text = fs.readFileSync(path.join(templateDir, from), "utf8");
     fs.writeFileSync(
       path.join(targetDir, fill(to)),
-      fill(selectVariant(to, text)),
+      render(to, selectVariant(to, text)),
     );
   }
 }

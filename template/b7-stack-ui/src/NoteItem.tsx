@@ -110,7 +110,7 @@ export function NoteItem({
   return (
     <li className={`py-3 ${deletePending ? "opacity-50" : ""}`}>
       <div className="flex items-start gap-2">
-        <p className="flex-1 py-1.5 wrap-break-word whitespace-pre-wrap">
+        <p className="min-w-0 flex-1 py-1.5 wrap-break-word whitespace-pre-wrap">
           {note.body}
         </p>
         <button

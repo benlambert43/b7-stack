@@ -165,6 +165,8 @@ The CLI copies `template/` file for file and replaces three strings everywhere, 
 - Keep those three strings exact, and do not write `b7-stack` anywhere else in the template.
 - `template/_gitignore` and `template/_npmrc` become `.gitignore` and `.npmrc` on copy, because npm drops files with those names when it packages the template for npx.
 - `.env` files, `node_modules`, and build output inside `template/` are never copied. The `files` list in the root `package.json` leaves the same paths out of the package, so `npm pack` works in a checkout where the template has been installed or built.
+- The dependencies in each `package.json` are sorted again once the names are in, because `@sunnyradish/shared` does not sort where `@b7-stack/shared` did, and npm would otherwise reorder them on its next install.
+- A `|` in the name or the description is written as `\|` in a Markdown table row, where it would start a new cell.
 - The generated project is formatted afterwards because the slug's length moves table columns and line breaks around.
 - Skip `npm run clean` inside `template/`. Run from there, its `git clean` exclusions no longer cover the `.env` files of the workspaces.
 
