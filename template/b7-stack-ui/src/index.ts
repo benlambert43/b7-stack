@@ -1,7 +1,5 @@
-export * from "./apiClient.ts";
 export * from "./AppShell.tsx";
 export * from "./NoteForm.tsx";
-export * from "./noteForm.ts";
 export * from "./NoteItem.tsx";
 export * from "./NoteList.tsx";
 export * from "./NotesSection.tsx";

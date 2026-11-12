@@ -1,6 +1,12 @@
 "use client";
 
-import { NOTE_BODY_MAX_LENGTH, type Note } from "@b7-stack/shared";
+import {
+  type DeleteNoteAction,
+  type Note,
+  NOTE_BODY_MAX_LENGTH,
+  type NoteFormState,
+  type UpdateNoteAction,
+} from "@b7-stack/shared";
 import {
   CheckIcon,
   PencilSquareIcon,
@@ -8,12 +14,6 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useActionState, useEffect, useRef, useState } from "react";
-
-import type {
-  DeleteNoteAction,
-  NoteFormState,
-  UpdateNoteAction,
-} from "./noteForm.ts";
 
 const iconButtonClassName =
   "rounded-md p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-100";

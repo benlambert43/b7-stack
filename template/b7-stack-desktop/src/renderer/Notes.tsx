@@ -1,14 +1,12 @@
-import type { Note } from "@b7-stack/shared";
 import {
   type DeleteNoteAction,
-  NoteList,
-  NoteListFallback,
-  NotesSection,
+  type Note,
   submitNewNote,
   submitNoteDelete,
   submitNoteEdit,
   type UpdateNoteAction,
-} from "@b7-stack/ui";
+} from "@b7-stack/shared";
+import { NoteList, NoteListFallback, NotesSection } from "@b7-stack/ui";
 import { startTransition, Suspense, use, useState } from "react";
 
 import { api } from "@/renderer/api.ts";

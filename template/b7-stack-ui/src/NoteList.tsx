@@ -1,6 +1,9 @@
-import type { Note } from "@b7-stack/shared";
+import type {
+  DeleteNoteAction,
+  Note,
+  UpdateNoteAction,
+} from "@b7-stack/shared";
 
-import type { DeleteNoteAction, UpdateNoteAction } from "./noteForm.ts";
 import { NoteItem } from "./NoteItem.tsx";
 
 export function NoteList({

@@ -155,6 +155,7 @@ function start(): void {
 
   createWindow();
   app.on("activate", showWindow);
+  app.on("second-instance", showWindow);
 }
 
 if (devServerUrl) {
@@ -195,7 +196,6 @@ app.on("window-all-closed", () => {
 });
 
 if (app.requestSingleInstanceLock()) {
-  app.on("second-instance", showWindow);
   void app.whenReady().then(start);
 } else {
   app.quit();

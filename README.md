@@ -5,7 +5,7 @@ A one-command starting point for new projects. Every project gets the same stack
 - **Web**: Next.js (App Router, Cache Components, React Compiler), Tailwind CSS, Testing Library
 - **API**: Express 5 on Node.js 26, running TypeScript directly with no build step
 - **Data**: PostgreSQL in Docker, Drizzle ORM with SQL migrations
-- **Shared**: Zod schemas and types used by the API and the apps
+- **Shared**: Zod schemas and types used by the API and the apps, and the API client the apps share
 - **UI**: React components and the Tailwind theme, in a package the apps share
 - **Desktop**, with `--desktop`: Electron with Electron Forge and Vite, built from the same components as the web app and calling the API directly
 - **Tooling**: npm workspaces, TypeScript 7, ESLint, Prettier, Vitest, Husky with lint-staged, ShellCheck, Dependabot, GitHub Actions CI

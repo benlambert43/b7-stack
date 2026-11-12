@@ -1,10 +1,5 @@
-import {
-  type HealthResponse,
-  healthResponseSchema,
-  type Note,
-  type NoteInput,
-  noteSchema,
-} from "@b7-stack/shared";
+import { type HealthResponse, healthResponseSchema } from "./health.ts";
+import { type Note, type NoteInput, noteSchema } from "./notes.ts";
 
 export function createApiClient(apiUrl: (path: string) => URL) {
   async function request(

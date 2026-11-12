@@ -1,4 +1,4 @@
-import { createApiClient } from "@b7-stack/ui";
+import { createApiClient } from "@b7-stack/shared";
 
 import { env } from "@/env.ts";
 

@@ -1,8 +1,8 @@
+import type { CreateNoteAction } from "@b7-stack/shared";
 import type { ReactNode } from "react";
 
 import { SectionHeading } from "./AppShell.tsx";
 import { NoteForm } from "./NoteForm.tsx";
-import type { CreateNoteAction } from "./noteForm.ts";
 
 export function NotesSection({
   createAction,

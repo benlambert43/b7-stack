@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createApiClient } from "@b7-stack/ui";
+import { createApiClient } from "@b7-stack/shared";
 
 function apiUrl(path: string): URL {
   const apiBaseUrl = process.env.API_BASE_URL;

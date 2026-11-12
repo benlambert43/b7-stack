@@ -1,15 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-
-import { requestAppRestart } from "@electron-forge/core-utils/restart";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { VitePlugin } from "@electron-forge/plugin-vite";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
-
-const mainBundle = path.join(import.meta.dirname, ".vite/build/main.cjs");
-let watchingMainBundle = false;
 
 const config: ForgeConfig = {
   packagerConfig: { asar: true },
@@ -17,22 +10,6 @@ const config: ForgeConfig = {
   hooks: {
     preStart: () => {
       process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ""} --enable-source-maps`;
-      return Promise.resolve();
-    },
-    postStart: () => {
-      if (!watchingMainBundle) {
-        watchingMainBundle = true;
-        fs.watchFile(mainBundle, { interval: 200 }, (now, before) => {
-          const rebuilt =
-            now.mtimeMs !== before.mtimeMs &&
-            fs.existsSync(`${mainBundle}.map`);
-          if (rebuilt && !requestAppRestart()) {
-            console.warn(
-              "The main process changed, but Forge could not restart the app.",
-            );
-          }
-        }).unref();
-      }
       return Promise.resolve();
     },
   },

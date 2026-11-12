@@ -16,6 +16,10 @@ const nodeGlobals = Object.keys(globals.node).filter(
   (name) => !(name in globals.browser),
 );
 
+const browserGlobals = Object.keys(globals.browser).filter(
+  (name) => !(name in globals.node),
+);
+
 const nodeModules = ["node:*", ...builtinModules];
 
 const { version: reactVersion } = createRequire(import.meta.url)(
@@ -72,6 +76,19 @@ export default defineConfig([
           message:
             "Node.js runs this code without a build step and cannot strip accessor fields.",
         },
+      ],
+    },
+  },
+  {
+    files: ["b7-stack-shared/src/**/*.ts"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        ...browserGlobals.map((name) => ({
+          name,
+          message:
+            "This code runs in Node.js as well as in browser windows, so use only what both have.",
+        })),
       ],
     },
   },

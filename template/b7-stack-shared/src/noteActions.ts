@@ -1,8 +1,4 @@
-import {
-  noteIdSchema,
-  type NoteInput,
-  noteInputSchema,
-} from "@b7-stack/shared";
+import { noteIdSchema, type NoteInput, noteInputSchema } from "./notes.ts";
 
 export interface NoteFormState {
   body: string;

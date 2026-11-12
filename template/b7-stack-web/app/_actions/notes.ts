@@ -5,7 +5,7 @@ import {
   submitNewNote,
   submitNoteDelete,
   submitNoteEdit,
-} from "@b7-stack/ui";
+} from "@b7-stack/shared";
 import { refresh } from "next/cache";
 
 import { api } from "@/app/_lib/api.ts";
