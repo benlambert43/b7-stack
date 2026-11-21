@@ -3,18 +3,26 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     cooldown:
       default-days: 7
     groups:
-      minor-and-patch:
-        patterns: ["*"]
+      npm-minor-and-patch:
         update-types: ["minor", "patch"]
+      npm-major:
+        update-types: ["major"]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
     ignore:
       - dependency-name: typescript
         update-types:
           - "version-update:semver-major"
           - "version-update:semver-minor"
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
       # desktop:start
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
@@ -23,15 +31,18 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
-      actions:
+      github-actions:
         patterns: ["*"]
 
   - package-ecosystem: docker-compose
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      docker-compose:
+        patterns: ["*"]
     ignore:
       - dependency-name: postgres
         update-types: ["version-update:semver-major"]
