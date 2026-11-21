@@ -228,5 +228,5 @@ CI runs the root preflight, installs the commit under test with npx exactly as a
 Dependabot updates the npm packages at the root and in the template, the Postgres image in the template, and the actions in this repository's workflow. Three things are left to do by hand:
 
 - Bump the `uses:` versions in `template/.github/workflows/ci.yml`, which Dependabot cannot see.
-- Raise the major version of `@types/node` when its runtime moves: Node.js for most of the repository, and the Node.js inside Electron for the desktop app. Raise TypeScript's major and minor versions by hand as well.
+- Raise the major version of `@types/node` when its runtime moves: Node.js for most of the repository, and the Node.js inside Electron for the desktop app. Raise TypeScript's major and minor versions, and the major versions of ESLint and `@eslint/js`, by hand as well.
 - Run `npm dedupe` in `template/` after updating by hand. npm can otherwise install a second copy of a package that one already present would satisfy, as it does with Rolldown after a fresh resolution.
